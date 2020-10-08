@@ -19,6 +19,7 @@ from datetime import date
 import os
 import sys
 import argparse
+import pandas as pd
 
 ##################################################
 ##################################################
@@ -63,7 +64,6 @@ def check_dates(date):
         exit()
     if int(y) > 2020 or int(y) < 2014:
         print("Sentinel wasn't up there at that time")
-
     # check for validity of month
     if len(m) != 2:
         print("The month must be a 2-digit number")
@@ -82,7 +82,7 @@ def check_dates(date):
     return "{0}{1}{2}".format(str(y), str(m), str(d))
 
 def parse_dates(args):
-    print(args.d)
+
     if args.d:
         date = check_dates(args.d)
         return date
@@ -109,10 +109,13 @@ def download_products(args, api, footprint, dates):
             os.makedirs(dir)
         out_path = dir
 
-
     if args.d:
+
+        # get the year the month and the day as ints with no leading 0
+        y,m,d = int(dates[0:4]), int(dates[4:6]), int(dates[6:8])
+
         products = api.query(footprint,
-                         date=(dates),
+                         date=(dates, date(y,m,d)),
                          platformname='Sentinel-1',
                          producttype=args.type,
                          path=args.out_path)
@@ -120,11 +123,16 @@ def download_products(args, api, footprint, dates):
     if args.ds:
         # run query for each single date TODO: Option for parallel?!
         for d in dates:
+            y, m, d = int(d[0:4]), int(d[4:6]), int(d[6:8])
             products = api.query(footprint,
-                                 date=(d),
+                                 date=(d, (y,m,d)),
                                  platformname='Sentinel-1',
                                  producttype=args.type,
                                  path=args.out_path)
+
+
+    products_df = api.to_dataframe(products)
+    print(products_df.head())
 
 def debug_args(args):
     print(args)
@@ -144,7 +152,6 @@ def main():
 
     # parse the dates
     dates = parse_dates(args)
-    print(dates)
 
     # download products
     download_products(args, api=api, footprint=footprint, dates = dates)
