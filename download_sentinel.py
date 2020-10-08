@@ -19,6 +19,7 @@ from datetime import date
 import os
 import sys
 import argparse
+from colors import  red
 import pandas as pd
 
 ##################################################
@@ -42,6 +43,9 @@ def get_arguments():
                                             "in the format yyyymmdd e.g. 20201231", type=str)
     group.add_argument("-ds", "--date_region",dest='ds', nargs='+', help="Downlowad all the available Scenes between the date", \
                         type=str)
+    group.add_argument("-id", "--uuid", dest='id', nargs='+',
+                       help="Downlowad all the available Scenes by their uuid", \
+                       type=str)
 
     parser.add_argument("-p", "--path", dest="out_path", help="path where files will be saved", type=str)
 
@@ -98,7 +102,9 @@ def parse_dates(args):
         print("Something went terribly wrong")
         exit()
 
-def download_products(args, api, footprint, dates):
+# footprint and dates are optional arguments that are only needed when the function is called to print
+# an overview with the dates
+def download_products(args, api, footprint=None, dates=None):
 
     # check if output-path specified
     if args.out_path:
@@ -108,6 +114,7 @@ def download_products(args, api, footprint, dates):
         if not os.path.exists(dir):
             os.makedirs(dir)
         out_path = dir
+
 
     if args.d:
 
@@ -130,9 +137,39 @@ def download_products(args, api, footprint, dates):
                                  producttype=args.type,
                                  path=args.out_path)
 
+    # the first two functions (for one date, and the one for multiple dates are acutally just to get an overview)
+    if not args.id:
+        products_df = api.to_dataframe(products)
+        print(products_df.head())
 
-    products_df = api.to_dataframe(products)
-    print(products_df.head())
+
+    # if we have the uuid we can download them directly
+    if args.id:
+        for i,id in enumerate(args.id):
+
+            print(red("=================================="))
+            print(red("downloading scene: {}".format(id)))
+            print(red("=================================="))
+
+            if i == 0:
+                while True:
+                    # prompt if he wishes to continues
+                    cont = input("Do you want to continue? [y/n]")
+                    if cont == "y":
+                        api.download(id)
+                        break
+                    if cont == "n":
+                        exit()
+                    else:
+                        print(red("Didn't get that. Either y or n"))
+
+
+
+            # download all the rest
+            api.download(id)
+
+
+
 
 def debug_args(args):
     print(args)
@@ -150,11 +187,16 @@ def main():
     # path to the geojson (Straight from the documentary)
     footprint = geojson_to_wkt(read_geojson(args.roi))
 
-    # parse the dates
-    dates = parse_dates(args)
+    # parse the dates (only when not downloading via the uuid)
+    if not args.id:
+        dates = parse_dates(args)
 
-    # download products
-    download_products(args, api=api, footprint=footprint, dates = dates)
+
+    # download products (acutally just an overview, when provifing a date or multiple dates)
+    if not args.id:
+        download_products(args, api=api, footprint=footprint, dates = dates)
+    else:
+        download_products(args, api=api)
 
 
 
