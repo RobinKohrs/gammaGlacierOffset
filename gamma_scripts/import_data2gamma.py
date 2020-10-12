@@ -5,7 +5,6 @@ try:
     import py_gamma as pg
 except ImportError as err:
     print("The module `py_gamma` needs to be installed")
-    exit(-1)
 
 import os
 import datetime as date
@@ -45,6 +44,7 @@ def slc_import():
 #########################################
 
 def dem_import():
+    print(dir_dem)
     pass
 
 
