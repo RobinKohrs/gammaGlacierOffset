@@ -4,7 +4,7 @@ try:
     import py_gamma as pg
 except ImportError as err:
     print("The module `py_gamma` needs to be installed")
-    #exit(-1)
+    exit(-1)
 
 import os
 import datetime as date
@@ -67,14 +67,35 @@ def slc_import():
 # DEM_Import
 #########################################
 
-def dem_import():
-    pass
+def dem_import(dir_dem, dem_name):
+    """
+    Importing national icelandic DEM to GAMMA
+    :param dir_dem: Directory containing the unzipped DEM which overlaps with the SLC at least in the areas of interest
+    :param dem_name: Full name of the DEM
+    :return: None, printing GAMMA output to console
+    """
+
+    dem = os.path.join(dir_dem, dem_name)
+    out = os.path.join(dir_dem, "DEM")
+    out_par = os.path.join(dir_dem, "DEM.par")
+
+    print(out)
+    pg.dem_import(dem, out, out_par)
+
+    # TODO: print size of the DEM from par-file
+    with open(out_par) as f:
+        lines = f.readlines()
+        print(lines)
+        f.close()
+
+    # dem_width =
+    # dem_lines =
 
 
 def main():
     unzip(dir_data, dir_data)
     # slc_import()
-    # dem_import()
+    dem_import(dir_dem, "LMI_Haedarlikan_DEM_16bit_subset.tif")
 
 if __name__ == "__main__":
     main()
