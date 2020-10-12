@@ -9,12 +9,15 @@ except ImportError as err:
 import os
 import datetime as date
 from glob import glob
-import zipfile as ZipFile
+import zipfile
+import shutil
+import tqdm
+from colors import red, green
 
 # directories
 dir_data = "../data"
-dir_slc = os.path.join(dir_data + "SLC")
-dir_dem = os.path.join(dir_data + "DEM")
+dir_slc = os.path.join(dir_data, "SLC")
+dir_dem = os.path.join(dir_data, "DEM")
 
 # arg-parsing arguments
 def get_arguments():
@@ -36,9 +39,21 @@ def S1_file_finder(dir_data):
 def unzip(dir_data, out_dir):
     safe_zips = S1_file_finder(dir_data)
     for f in safe_zips:
-        with ZipFile(f, "r") as zobj:
-            print(zobj)
-            #zobj.extractall(out_dir)
+        zf = zipfile.ZipFile(f)
+        uncompressed_size = sum((file.file_size for file in zf.infolist()))
+        extraced_size = 0
+        print("======")
+        print(green("Extracting: {}".format(f)))
+        print("======")
+        for file in zf.infolist():
+            extraced_size += file.file_size
+            print("{} %".format(extraced_size * 100/uncompressed_size))
+            zf.extract(file, out_dir)
+        exit()
+        #
+        # print(f)
+        # shutil.unpack_archive(f, out_dir)
+        # exit()
 
 #########################################
 # SLC_Import
@@ -57,7 +72,7 @@ def dem_import():
 
 
 def main():
-    unzip(dir_data, "./")
+    unzip(dir_data, dir_data)
     # slc_import()
     # dem_import()
 
