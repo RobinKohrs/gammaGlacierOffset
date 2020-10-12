@@ -1,15 +1,14 @@
 # Import SLCs and DEM to GAMMA software within a given directory structure
 
-
 try:
     import py_gamma as pg
 except ImportError as err:
     print("The module `py_gamma` needs to be installed")
-    exit(-1)
+    #exit(-1)
 
 import os
 import datetime as date
-import glob
+from glob import glob
 import zipfile as ZipFile
 
 # directories
@@ -25,17 +24,26 @@ def get_arguments():
 # Unzip
 #########################################
 
-def unzip(file, out_dir):
-    pass
+def S1_file_finder(dir_data):
+    """
+    :param : s1dir
+    :return:
+    """
+    safe_zips = glob(os.path.join(dir_data, "*.zip"))
+    print(safe_zips)
+    return safe_zips
+
+def unzip(dir_data, out_dir):
+    safe_zips = S1_file_finder(dir_data)
+    for f in safe_zips:
+        with ZipFile(f, "r") as zobj:
+            print(zobj)
+            #zobj.extractall(out_dir)
 
 #########################################
 # SLC_Import
 #########################################
 
-
-def S1_file_finder(out):
-    zip = glob.glob(dir_slc, "*.zip")
-    return [zip]
 
 def slc_import():
     pass
@@ -49,9 +57,9 @@ def dem_import():
 
 
 def main():
-    unzip()
-    slc_import()
-    dem_import()
+    unzip(dir_data, "./")
+    # slc_import()
+    # dem_import()
 
 if __name__ == "__main__":
     main()
