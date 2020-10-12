@@ -4,7 +4,6 @@
 try:
     import py_gamma as pg
 except ImportError as err:
-    pass
     print("The module `py_gamma` needs to be installed")
     exit(-1)
 
@@ -14,37 +13,45 @@ import glob
 import zipfile as ZipFile
 
 # directories
-dir_data = "../data/"
-# dir_slc = dir_data + "SLC/"
+dir_data = "../data"
+dir_slc = os.path.join(dir_data + "SLC")
+dir_dem = os.path.join(dir_data + "DEM")
 
-
-# arc-parsing arguments
+# arg-parsing arguments
 def get_arguments():
     pass
 
+#########################################
+# Unzip
+#########################################
 
-###############
-# file finder #
+def unzip(file, out_dir):
+    pass
+
+#########################################
+# SLC_Import
+#########################################
+
 
 def S1_file_finder(out):
     zip = glob.glob(dir_slc, "*.zip")
     return [zip]
 
+def slc_import():
+    pass
 
-##############
-# unzip  #####
+#########################################
+# DEM_Import
+#########################################
 
-def unzip(file, out_dir):
+def dem_import():
     pass
 
 
-##############
-# unzip  #####
-
 def main():
-    zips = glob.glob(dir_slc + "*.zip")
-    print(zips)
-    ZipFile.extractall(members=zips)
+    unzip()
+    slc_import()
+    dem_import()
 
 if __name__ == "__main__":
     main()
