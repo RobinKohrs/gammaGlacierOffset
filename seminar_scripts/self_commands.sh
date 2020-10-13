@@ -3,13 +3,13 @@
 
 
 ## AUFGABE
-# dem_import geoid korrigieren!
+# dem_import geoid korrigieren!z
 # lt
 # inter
 # coh
 # GRD multilook
 # anderes DEM
-# welche Auflösung, was muss ich im Vergleich zu DInSAR-Beispiel von gestern anders machen?
+# welche Auflï¿½sung, was muss ich im Vergleich zu DInSAR-Beispiel von gestern anders machen?
 # Oversampling Optionen: gc_map
 
 ###############################################################################
@@ -18,8 +18,8 @@
 # mosaic files to vrt
 gdalbuildvrt srtm.vrt *tif
 
-# Import DEM (geoid Korrektur, nicht 0 über Ozean -> Ellipsoid, 0 über Ozean -> Geoid)
-# MUSS FÜR SRTM GEMACHT WERDEN, TDX Copernicus layer nicht.
+# Import DEM (geoid Korrektur, nicht 0 ï¿½ber Ozean -> Ellipsoid, 0 ï¿½ber Ozean -> Geoid)
+# MUSS Fï¿½R SRTM GEMACHT WERDEN, TDX Copernicus layer nicht.
 dem_import srtm.vrt dem dem.par 0 1 $DIFF_HOME/scripts/egm2008-5.dem $DIFF_HOME/scripts/egm2008-5.dem_par
 
 zip1=S1A_IW_SLC__1SDV_20170731T163002*.zip
@@ -83,9 +83,9 @@ echo "${base2}_${pol}_iw1.slc ${base2}_${pol}_iw1.slc.par ${base2}_${pol}_iw1.sl
 echo "${base2}_${pol}_iw2.slc ${base2}_${pol}_iw2.slc.par ${base2}_${pol}_iw2.slc.tops.par" >> slc2_tab
 echo "${base2}_${pol}_iw3.slc ${base2}_${pol}_iw3.slc.par ${base2}_${pol}_iw3.slc.tops.par" >> slc2_tab
 
-# hier definieren, wie groß die Zielauflösung sein soll -> hier: 90m (für Waldanwendungen)
+# hier definieren, wie groï¿½ die Zielauflï¿½sung sein soll -> hier: 90m (fï¿½r Waldanwendungen)
 
-# Sentinel-1 Auflösungen:
+# Sentinel-1 Auflï¿½sungen:
 # range: 4.2m
 # azimuth: 14m
 
@@ -99,7 +99,7 @@ SLC_mosaic_S1_TOPS slc1_tab ${base1}.slc  ${base1}.slc.par $ml_rg $ml_az
 # create multilook to safe CPU power when geocoding the DEM on RADAR
 multi_look ${base1}.slc  ${base1}.slc.par ${base1}.mli ${base1}.mli.par $ml_rg $ml_az
 
-# Breite und Höhe
+# Breite und Hï¿½he
 mli1_width=$(cat ${base1}.mli.par | grep "range_samples:" | awk -F ':' '{ print $2 }')
 mli1_lines=$(cat ${base1}.mli.par | grep "azimuth_lines:" | awk -F ':' '{ print $2 }')
 

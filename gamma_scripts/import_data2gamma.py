@@ -11,7 +11,6 @@ from glob import glob
 import zipfile
 import shutil
 import tqdm
-from colors import red, green
 import re
 
 # try importing gamma (only works when working on the server) --> So check if working on server
@@ -55,17 +54,15 @@ def unzip(dir_data, out_dir):
         uncompressed_size = sum((file.file_size for file in zf.infolist()))
         extraced_size = 0
         print("======")
-        print(green("Extracting: {}".format(f)))
+        TGREEN = '\033[32m'  # Green Text
+        ENDC = '\033[m'
+        print(TGREEN + "Extracting: {}".format(f) + ENDC)
         print("======")
         for file in zf.infolist():
             extraced_size += file.file_size
             print("{} %".format(extraced_size * 100/uncompressed_size))
             zf.extract(file, out_dir)
-        exit()
-        #
-        # print(f)
-        # shutil.unpack_archive(f, out_dir)
-        # exit()
+
 
 #########################################
 # SLC_Import
@@ -133,9 +130,41 @@ def get_dates(dir_data):
         i += 1
     return dates_dict
 
+def make_base_paths(dates_pairs):
+    """
+
+    :param dates:
+    :return:
+    """
+
+    # create dictionary with keys(number of pair), value(SAFE-PATHS)
+    basenames = {x:None for x in range(1,11)}
+    # iterate over the dates_pats dictionary
+    for i,int_pair in enumerate(dates_pairs):
+        # becuase the numbering in the dictionary is from 1:10 and not 0:9
+        i += 1
+        paths = []
+        for date in dates_pairs[i]:
+            # for ever file (directory) check if the date is in the name
+            for file in os.listdir(dir_data):
+                # file needs to end with .SAFE
+                if file.endswith(".SAFE"):
+                    # if file contains the acutal date
+                    if date in file:
+                        # get only the basename
+                        paths.append(file)
+        basenames[i] = paths
+
+    print(basenames)
+
+
+
+
+
 def slc_import(dir_data):
     dates_pairs = get_dates(dir_data)
-    print(dates_pairs)
+    make_base_paths(dates_pairs)
+
 
 
 #########################################
