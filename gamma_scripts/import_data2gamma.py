@@ -50,27 +50,26 @@ def S1_zip_finder(dir_data):
 def unzip(dir_data, out_dir):
     safe_zips = S1_zip_finder(dir_data)
     for f in safe_zips:
-        zf = zipfile.ZipFile(f)
         # check if the unzipped file already exists
         safe = os.path.join(dir_data, os.path.splitext(os.path.basename(f))[0] + ".SAFE")
         if not os.path.isdir(safe):
             print(f)
-            zf = zipfile.ZipFile(f)
-            uncompressed_size = sum((file.file_size for file in zf.infolist()))
-            extraced_size = 0
-            print("======")
-            TGREEN = '\033[32m'  # Green Text
-            ENDC = '\033[m'
-            print(TGREEN + "Extracting: {}".format(f) + ENDC)
-            print("======")
-            for file in zf.infolist():
-                extraced_size += file.file_size
-                print("{} %".format(extraced_size * 100/uncompressed_size))
-                zf.extract(file, out_dir)
+            print("still needs to be extracted")
+            # zf = zipfile.ZipFile(f)
+            # uncompressed_size = sum((file.file_size for file in zf.infolist()))
+            # extraced_size = 0
+            # print("======")
+            # TGREEN = '\033[32m'  # Green Text
+            # ENDC = '\033[m'
+            # print(TGREEN + "Extracting: {}".format(f) + ENDC)
+            # print("======")
+            # for file in zf.infolist():
+            #     extraced_size += file.file_size
+            #     print("{} %".format(extraced_size * 100/uncompressed_size))
+            #     zf.extract(file, out_dir)
         else:
-            print("=======")
             print("already unzipped")
-            print("=======")
+
 
 #########################################
 # SLC_Import
@@ -169,7 +168,6 @@ def make_base_paths(dates_pairs):
                         # get only the basename
                         paths.append(file)
         basenames[i] = paths
-
     return basenames
 
 def import_loop(safe_paths_dir):
@@ -181,11 +179,8 @@ def import_loop(safe_paths_dir):
 def slc_import(dir_data):
     dates_pairs = get_dates(dir_data)
     safe_paths_dir = make_base_paths(dates_pairs)
-    import_loop(safe_paths_dir)
-
-
-
-
+    print(safe_paths_dir)
+    #import_loop(safe_paths_dir)
 
 #########################################
 # DEM_Import
@@ -221,8 +216,8 @@ def main():
     # TODO: Wenn wir die pfadvariablen oben global definieren, dann brauchen wir sie wahrscheinlich hier unter nicht
     # TODO: Nochmal alsarguemte oder?
 
-    unzip(dir_data, dir_data)
-    #slc_import(dir_data)
+    #unzip(dir_data, dir_data)
+    slc_import(dir_data)
     #dem_import(dir_dem, "LMI_Haedarlikan_DEM_16bit_subset.tif")
 
 if __name__ == "__main__":
