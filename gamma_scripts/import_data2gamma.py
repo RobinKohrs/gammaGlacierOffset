@@ -13,17 +13,26 @@ import shutil
 import tqdm
 import re
 import subprocess
+import sys
 
 # try importing gamma (only works when working on the server) --> So check if working on server
-kernel = str(os.system("uname -r"))
-print(kernel)
-if kernel == "3.10.0-957.el7.x86_64":
-    try:
-        import py_gamma as pg
-    except ImportError as err:
-        print("The module `py_gamma` needs to be installed")
-else:
+
+# TODO: Kernel search not reliable on all nodes of TS
+if sys.platform == "win32":
     pass
+else:
+    kernel = str(os.system("uname -r"))
+    print(kernel)
+
+    if kernel == "3.10.0-957.el7.x86_64":
+        try:
+            import py_gamma as pg
+            print("py_gamma successfully loaded")
+        except ImportError as err:
+            print("The module `py_gamma` needs to be installed")
+    else:
+        print("Kernel not identical")
+        import py_gamma as pg
 
 # some colors
 TGREEN = '\033[32m'  # Green Text
@@ -63,16 +72,16 @@ def unzip(dir_data, out_dir):
         if not os.path.isdir(safe):
             print(f)
             print("still needs to be extracted")
-            # zf = zipfile.ZipFile(f)
-            # uncompressed_size = sum((file.file_size for file in zf.infolist()))
-            # extraced_size = 0
-            # print("======")
-            # print(TGREEN + "Extracting: {}".format(f) + ENDC)
-            # print("======")
-            # for file in zf.infolist():
-            #     extraced_size += file.file_size
-            #     print("{} %".format(extraced_size * 100/uncompressed_size))
-            #     zf.extract(file, out_dir)
+            zf = zipfile.ZipFile(f)
+            uncompressed_size = sum((file.file_size for file in zf.infolist()))
+            extraced_size = 0
+            print("======")
+            print(TGREEN + "Extracting: {}".format(f) + ENDC)
+            print("======")
+            for file in zf.infolist():
+                extraced_size += file.file_size
+                print("{} %".format(extraced_size * 100/uncompressed_size))
+                zf.extract(file, out_dir)
         else:
             print("already unzipped")
 
@@ -255,31 +264,18 @@ def dem_import(dir_dem, dem_name):
     dem = os.path.join(dir_dem, dem_name)
     out = os.path.join(dir_dem, "DEM")
     out_par = os.path.join(dir_dem, "DEM.par")
+    print("DEM file: {}\n".format(dem),
+          "DEM output file: {}\n".format(out),
+          "DEM output parameter file: {}\n".format(out_par)
+          )
 
-    print(out)
     pg.dem_import(dem, out, out_par)
-
-    # TODO: print size of the DEM from par-file
-    with open(out_par) as f:
-        lines = f.readlines()
-        if re.search("width", lines):
-            dem_width = lines
-        if re.search("lines", lines):
-            dem_lines = lines
-        print("Width: ", dem_width, "\n",
-              "Lines: ", dem_lines, "\n")
-        f.close()
 
 def main():
 
-    # TODO: Wenn wir die pfadvariablen oben global definieren, dann brauchen wir sie wahrscheinlich hier unter nicht
-    # TODO: Nochmal alsarguemte oder?
-
-
-    #unzip(dir_data, dir_data)
-    slc_import(dir_data)
-    #dem_import(dir_dem, "LMI_Haedarlikan_DEM_16bit_subset.tif")
-
+    # unzip(dir_data, dir_data)
+    # slc_import(dir_data)
+    dem_import(dir_dem, dem_name)
 
 if __name__ == "__main__":
     main()
