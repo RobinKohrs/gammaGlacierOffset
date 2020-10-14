@@ -12,6 +12,7 @@ import zipfile
 import shutil
 import tqdm
 import re
+import subprocess
 
 # try importing gamma (only works when working on the server) --> So check if working on server
 kernel = str(os.system("uname -r"))
@@ -23,6 +24,10 @@ if kernel == "3.10.0-957.el7.x86_64":
         print("The module `py_gamma` needs to be installed")
 else:
     pass
+
+# some colors
+TGREEN = '\033[32m'  # Green Text
+ENDC = '\033[m'
 
 #########################################
 # USER INPUT
@@ -62,8 +67,6 @@ def unzip(dir_data, out_dir):
             # uncompressed_size = sum((file.file_size for file in zf.infolist()))
             # extraced_size = 0
             # print("======")
-            # TGREEN = '\033[32m'  # Green Text
-            # ENDC = '\033[m'
             # print(TGREEN + "Extracting: {}".format(f) + ENDC)
             # print("======")
             # for file in zf.infolist():
@@ -77,7 +80,6 @@ def unzip(dir_data, out_dir):
 #########################################
 # SLC_Import
 #########################################
-
 
 def get_dates(dir_data):
     """
@@ -174,20 +176,69 @@ def make_base_paths(dates_pairs):
         basenames[i] = paths
     return basenames
 
-def import_loop(data_dir):
-    safes = [x for x in os.listdir(data_dir) if x.endswith(".SAFE")]
-    # loops over all safe folders and extrac the necessary data
-    for s in safes:
+def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
+    """
+
+    :param safe_folder: path to the SAFE-folder that is going to be imported
+    :param swaths: list os subswaths to import
+    :return: None
+    """
+    if not swaths:
+
+        print("=====")
+        print("only importing subswath 2")
+        print("=====")
+
+        # finding tiff
+        findCMD = 'find {safe_folder} -name "*.tiff" | grep {pol} | grep {sw}'.format(safe_folder=safe_folder, pol=pol,sw=sw)
+        out = subprocess.Popen(findCMD, shell=True, stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = out.communicate()
+        tiff = stdout.decode().split()
+
+        # finding annotation file
+        findCMD = 'find {safe_folder} -name "s1a-*.xml" | grep {pol} | grep {sw}'.format(safe_folder=safe_folder, pol=pol,
+                                                                                      sw=sw)
+        out = subprocess.Popen(findCMD, shell=True, stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = out.communicate()
+        ann = stdout.decode().split()
+
+        # find calibration file
+        findCMD = 'find {safe_folder} -name "calibration-s1a-*.xml" | grep {pol} | grep {sw}'.format(safe_folder=safe_folder,
+                                                                                         pol=pol,
+                                                                                         sw=sw)
+        out = subprocess.Popen(findCMD, shell=True, stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = out.communicate()
+        cal = stdout.decode().split()
+
+        # find noise file
+        findCMD = 'find {safe_folder} -name "noise-s1a-*.xml" | grep {pol} | grep {sw}'.format(safe_folder=safe_folder,
+                                                                                         pol=pol,
+                                                                                         sw=sw)
+        out = subprocess.Popen(findCMD, shell=True, stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = out.communicate()
+        noi = stdout.decode().split()
+
+        # create the .slc and the .slc.par
+        slc_name = os.path.splitext(os.path.basename(safe_folder))[0] + ".slc"
+        slc_par_name = slc_name + ".par"
+        print(TGREEN + "======= Creating: =========" + ENDC)
+        print(TGREEN + "{} \n{}".format(slc_name, slc_par_name) + ENDC)
 
 
 
+    else:
+        print(swaths)
 
 
 
 def slc_import(dir_data):
     # dates_pairs = get_dates(dir_data)
     # safe_paths_dir = make_base_paths(dates_pairs)
-    import_loop(dir_data)
+    import_scene("../data/S1A_IW_SLC__1SDV_20160112T184956_20160112T185023_009465_00DBA0_0436.SAFE")
 
 #########################################
 # DEM_Import
