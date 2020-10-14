@@ -1,6 +1,5 @@
-
-This repo will contain the code for performing the offset tracking with gamma
-
+This repo will contain the code for performing the offset tracking with gamma. Winter Semester 2020/21. Authorship:
+Robin Kohrs, Konstantin Schellenberg, University of Jena, M.Sc. Geoinformatics.
 
 # Flowchart
 
@@ -14,7 +13,9 @@ unsere Ergebnisse (4, 5).
 ## 0. Create Folder Structure
 _filename: makeFolderStructure.py_
 
-## 1. SLC and DEM Import
+***
+
+## 1. SLC (R) and DEM Import (K)
 _filename: import_data2gamma.py_
 
 
@@ -27,8 +28,9 @@ Iteration über jede Szene. Main() enthält eine Loop, um über alle Szene zu it
 
 **Notes**
  
+***
 
-## 2. Mosaic
+## 2. Mosaic (R)
 _filename: mosaicTOPS.py_
 
 **What does it?**
@@ -47,36 +49,32 @@ output:
 
 **Notes**
 
+***
 
 ## 3. Offset (power & fringe visibility)
-_filename: .py_
+ACHTUNG: Iteration über Szenenpaare
 
-Iteration nur Szenenpaare
 
-### 3.1 create_offsets
-
-Remove .off file
-
-Reference und dependent SLC definition. 1 = Intensity Tracking, 2 = Fringe Visibility Tracking (Phase)
-
-.off file wird geupdated während des gesamten Optimierungsprozesses
-
-**What does it?**
-
-**How to call it in Gamma?**
-
-**Notes**
-
-### 3.2 init_offsets_orbit (and init_offsets)
+### 3.1 Initialise Offsets (R)
 _filename: offsetInitialisation.py_
 
-**What does it?**
+**Umfasst folgende Funktionen:**
+1. create_offsets
+2. init_offsets_orbit
 
-**How to call it in Gamma?**
+Needs to remove .off file in order to rerun process. By default, .off will be used as input and not overwritten
+
+Reference und dependent SLC definition. 
+- 1 = Intensity Tracking, 
+- 2 = Fringe Visibility Tracking (Phase)
 
 **Notes**
 
-### 3.3 offset_pwr / offset_SLC
+.off file wird geupdated während des gesamten Optimierungsprozesses.
+
+***
+
+### 3.2 offset_pwr / offset_SLC
 _filename: offsetRefinement.py_
 
 **Window size optimisation**
@@ -92,8 +90,6 @@ Window size optimisation
 
 
 
-**What does it?**
-
 **How to call it in Gamma?**
 
 - offset_pwr
@@ -105,6 +101,7 @@ _similar for phase tracking_
 
 - deramp flag?
 
+***
 
 ### 3.3 offset_pwr_tracking / offset_SLC_tracking
 
@@ -116,12 +113,16 @@ Log: Azimuth lines werden angezeigt
 
 **Notes**
 
+***
+
 ### 4. Quality Assessment
 
 1. Optimale Fenstergröße für offset-tracking
 2. Jahreszeiten
 3. Zeitlicher Verlauf der Gletscherbewegung
 4. Vergleiche mit Mishas Paper
+
+***
 
 ### 5. Visualisation
 
