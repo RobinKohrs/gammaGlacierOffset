@@ -39,6 +39,10 @@ SLC_mosaic_S1_TOPS nur IW2
 input: Table with slc - slc.par - slc.tops.par parameters
 output: debursted & mosaicked
 
+multi_look
+input:
+output:
+
 **How to call it in Gamma?**
 
 **Notes**
@@ -51,6 +55,8 @@ Iteration nur Szenenpaare
 
 ### 3.1 create_offsets
 
+Remove .off file
+
 Reference und dependent SLC definition. 1 = Intensity Tracking, 2 = Fringe Visibility Tracking (Phase)
 
 .off file wird geupdated während des gesamten Optimierungsprozesses
@@ -61,7 +67,8 @@ Reference und dependent SLC definition. 1 = Intensity Tracking, 2 = Fringe Visib
 
 **Notes**
 
-### 3.2 init_offsets_orbit / init_offsets
+### 3.2 init_offsets_orbit (and init_offsets)
+_filename: offsetInitialisation.py_
 
 **What does it?**
 
@@ -70,12 +77,34 @@ Reference und dependent SLC definition. 1 = Intensity Tracking, 2 = Fringe Visib
 **Notes**
 
 ### 3.3 offset_pwr / offset_SLC
+_filename: offsetRefinement.py_
+
+**Window size optimisation**
+
+input: initiated .offs
+output: write out .off, offs, ccp with optimised windows
+
+parameters: window width & height, threshold
+
+repeat offset_pwr & offset_fit -> result of offset_fit assessment of stdev (written to coffsets)
+
+Window size optimisation
+
+
 
 **What does it?**
 
 **How to call it in Gamma?**
 
+- offset_pwr
+- offset_fit
+
+_similar for phase tracking_
+
 **Notes**
+
+- deramp flag?
+
 
 ### 3.3 offset_pwr_tracking / offset_SLC_tracking
 
@@ -88,6 +117,15 @@ Log: Azimuth lines werden angezeigt
 **Notes**
 
 ### 4. Quality Assessment
+
+1. Optimale Fenstergröße für offset-tracking
+2. Jahreszeiten
+3. Zeitlicher Verlauf der Gletscherbewegung
+4. Vergleiche mit Mishas Paper
+
 ### 5. Visualisation
+
+1. Displacement map
+2. Change of displacement
 
 
