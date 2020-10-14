@@ -25,12 +25,15 @@ if kernel == "3.10.0-957.el7.x86_64":
 else:
     pass
 
-#########################################################################
+#########################################
+# USER INPUT
+#########################################
 
 # directories
 dir_data = "../data"
 dir_slc = os.path.join(dir_data, "SLC")
 dir_dem = os.path.join(dir_data, "DEM")
+dem_name = "LMI_Haedarlikan_DEM_16bit_subset.tif"
 
 # arg-parsing arguments
 def get_arguments():
@@ -63,7 +66,7 @@ def unzip(dir_data, out_dir):
             zf.extract(file, out_dir)
         exit()
         #
-        # print(f)
+        print(f)
         # shutil.unpack_archive(f, out_dir)
         # exit()
 
@@ -98,7 +101,7 @@ def get_dates(dir_data):
     # put the two lists into one list
     dates_total = [summer, winter]
 
-    # dictionary that will hold for every interometric pair the dates
+    # dictionary that will hold for every interferometric pair the dates
     # dates_pairs = {i:None for i in range(1,11)}
     dates_pairs = []
 
@@ -160,12 +163,13 @@ def dem_import(dir_dem, dem_name):
     # TODO: print size of the DEM from par-file
     with open(out_par) as f:
         lines = f.readlines()
-        print(lines)
+        if re.search("width", lines):
+            dem_width = lines
+        if re.search("lines", lines):
+            dem_lines = lines
+        print("Width: ", dem_width, "\n",
+              "Lines: ", dem_lines, "\n")
         f.close()
-
-    # dem_width =
-    # dem_lines =
-
 
 def main():
 
@@ -173,8 +177,8 @@ def main():
     # TODO: Nochmal alsarguemte oder?
 
     #unzip(dir_data, dir_data)
-    slc_import(dir_data)
-    #dem_import(dir_dem, "LMI_Haedarlikan_DEM_16bit_subset.tif")
+    #slc_import(dir_data)
+    dem_import(dir_dem, dem_name)
 
 if __name__ == "__main__":
     main()
