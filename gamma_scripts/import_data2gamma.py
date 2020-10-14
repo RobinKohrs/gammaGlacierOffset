@@ -11,7 +11,6 @@ from glob import glob
 import zipfile
 import shutil
 import tqdm
-from colors import red, green
 import re
 
 # try importing gamma (only works when working on the server) --> So check if working on server
@@ -55,20 +54,26 @@ def unzip(dir_data, out_dir):
     safe_zips = S1_zip_finder(dir_data)
     for f in safe_zips:
         zf = zipfile.ZipFile(f)
-        uncompressed_size = sum((file.file_size for file in zf.infolist()))
-        extraced_size = 0
-        print("======")
-        print(green("Extracting: {}".format(f)))
-        print("======")
-        for file in zf.infolist():
-            extraced_size += file.file_size
-            print("{} %".format(extraced_size * 100/uncompressed_size))
-            zf.extract(file, out_dir)
-        exit()
-        #
-        print(f)
-        # shutil.unpack_archive(f, out_dir)
-        # exit()
+        # check if the unzipped file already exists
+        safe = os.path.join(dir_data, os.path.splitext(os.path.basename(f))[0] + ".SAFE")
+        if not os.path.isdir(safe):
+            print(f)
+            zf = zipfile.ZipFile(f)
+            uncompressed_size = sum((file.file_size for file in zf.infolist()))
+            extraced_size = 0
+            print("======")
+            TGREEN = '\033[32m'  # Green Text
+            ENDC = '\033[m'
+            print(TGREEN + "Extracting: {}".format(f) + ENDC)
+            print("======")
+            for file in zf.infolist():
+                extraced_size += file.file_size
+                print("{} %".format(extraced_size * 100/uncompressed_size))
+                zf.extract(file, out_dir)
+        else:
+            print("=======")
+            print("already unzipped")
+            print("=======")
 
 #########################################
 # SLC_Import
@@ -76,6 +81,14 @@ def unzip(dir_data, out_dir):
 
 
 def get_dates(dir_data):
+    """
+    Funtion to exrtact the dates from the zip-filesnames and return them
+
+    :param path to the directory with all the zip files:
+    :return : a sorted dictionary in the form {i:('date_1', 'date_2')}
+              The keys are numbered for as many pairs of scenes we do have
+              The values are tuples holding the two dates as strings
+    """
 
     # get all the dates
     zips = S1_zip_finder(dir_data)
@@ -136,9 +149,46 @@ def get_dates(dir_data):
         i += 1
     return dates_dict
 
+def make_base_paths(dates_pairs):
+    """
+
+    :param dates_pairs: a dictionary with the values beeing the dates for each interferometric pair
+    :return: a dictionary with the keys beeing the number of the interferometric pair and the
+              values beeing the paths of the .SAFE-files
+    """
+
+    # create dictionary with keys(number of pair), value(SAFE-PATHS)
+    basenames = {x:None for x in range(1,11)}
+    # iterate over the dates_pats dictionary
+    for i,int_pair in enumerate(dates_pairs, start = 1):
+        # becuase the numbering in the dictionary is from 1:10 and not 0:9
+        paths = []
+        for date in dates_pairs[i]:
+            # for ever file (directory) check if the date is in the name
+            for file in os.listdir(dir_data):
+                # file needs to end with .SAFE
+                if file.endswith(".SAFE"):
+                    # if file contains the actual date
+                    if date in file:
+                        # get only the basename
+                        paths.append(file)
+        basenames[i] = paths
+
+    return basenames
+
+def import_loop(safe_paths_dir):
+
+    for i in safe_paths_dir.values():
+        print(i)
+        print()
+
 def slc_import(dir_data):
     dates_pairs = get_dates(dir_data)
-    print(dates_pairs)
+    safe_paths_dir = make_base_paths(dates_pairs)
+    import_loop(safe_paths_dir)
+
+
+
 
 
 #########################################
@@ -176,9 +226,9 @@ def main():
     # TODO: Wenn wir die pfadvariablen oben global definieren, dann brauchen wir sie wahrscheinlich hier unter nicht
     # TODO: Nochmal alsarguemte oder?
 
-    #unzip(dir_data, dir_data)
-    #slc_import(dir_data)
-    dem_import(dir_dem, dem_name)
+    # unzip(dir_data, dir_data)
+    # slc_import(dir_data)
+    # dem_import(dir_dem, dem_name)
 
 if __name__ == "__main__":
     main()
