@@ -4,7 +4,7 @@ This repo will contain the code for performing the offset tracking with gamma
 
 # Flowchart
 
-## SLC-Import
+## 1. SLC-Import
 
 **What does it?**
 
@@ -13,7 +13,7 @@ This repo will contain the code for performing the offset tracking with gamma
 **Notes**
  
 
-## Mosaic
+## 2. Mosaic
 
 
 
@@ -24,8 +24,11 @@ This repo will contain the code for performing the offset tracking with gamma
 **Notes**
 
 
-## Offset (power & fringe visibility)
+## 3. Offset (power & fringe visibility)
 
+### 3.1 <gamma-function 1>
+
+### 3.2 <gamma-function 1>
 
 **What does it?**
 

@@ -174,17 +174,20 @@ def make_base_paths(dates_pairs):
         basenames[i] = paths
     return basenames
 
-def import_loop(safe_paths_dir):
+def import_loop(data_dir):
+    safes = [x for x in os.listdir(data_dir) if x.endswith(".SAFE")]
+    # loops over all safe folders and extrac the necessary data
+    for s in safes:
 
-    for i in safe_paths_dir.values():
-        print(i)
-        print()
+
+
+
+
 
 def slc_import(dir_data):
-    dates_pairs = get_dates(dir_data)
-    safe_paths_dir = make_base_paths(dates_pairs)
-    print(safe_paths_dir)
-    #import_loop(safe_paths_dir)
+    # dates_pairs = get_dates(dir_data)
+    # safe_paths_dir = make_base_paths(dates_pairs)
+    import_loop(dir_data)
 
 #########################################
 # DEM_Import
