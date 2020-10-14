@@ -99,7 +99,7 @@ print()
 # check if structure not already exists
 #seasons = ["../data/summer", "../data/winter"]
 # mode
-modes = ["./intensity", "./phase"]
+modes = ["../data/intensity", "../data/phase"]
 
 # create both if not existent
 for m in modes:
@@ -112,7 +112,7 @@ for m in modes:
                 for d in comb_dates_all:
                     dirs = os.path.join(m, d)
                     print(dirs)
-                    #os.makedirs(dirs)
+                    os.makedirs(dirs)
             else:
                 print("==============================")
                 print("Creating Intensity directories: ")
@@ -120,7 +120,7 @@ for m in modes:
                 for d in comb_dates_all:
                     dirs = os.path.join(m, d)
                     print(dirs)
-                    #os.makedirs(dirs)
+                    os.makedirs(dirs)
 
     else:
         print("Folder structure already exists")
@@ -128,13 +128,13 @@ for m in modes:
 ###########################
 # Create directories for DEM and SLCs
 ###########################
-aux_dirs = ["./DEM", "./SLC"]
+aux_dirs = ["../data/DEM", "../data/SLC"]
 for dir in aux_dirs:
     if not os.path.isdir(dir):
         print("==========")
         print("Creating Directory \n {}".format(dir))
         print("==========")
-        #os.makedirs(dir)
+        os.makedirs(dir)
 
 
 
