@@ -228,8 +228,6 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         print(TGREEN + "======= Creating: =========" + ENDC)
         print(TGREEN + "{} \n{}".format(slc_name, slc_par_name) + ENDC)
 
-
-
     else:
         print(swaths)
 
