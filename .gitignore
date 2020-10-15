@@ -3,3 +3,4 @@ tasks.md
 data*
 .idea
 S1A*
+__pycache__
