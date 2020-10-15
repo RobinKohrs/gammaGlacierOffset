@@ -19,6 +19,7 @@ import sys
 # try importing gamma (only works when working on the server) --> So check if working on server
 home = os.getenv("HOME")
 if "qa32" in home or "konsti??" in home: #TODO können ja einfach gegen unser home-directory checken
+    print("working on server...")
     try:
         import py_gamma as pg
     except ImportError as err:
@@ -129,8 +130,8 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         print()
         print(start_bold + start_underline + "Found the following ancillary files" + end_bold + end_underline)
         print("SLC:\n" + ENDC, slc)
-        print( "Annotation:\n" + ENDC, noi)
-        print( "Calibaration:\n" + ENDC, cal)
+        print("Annotation:\n" + ENDC, noi)
+        print("Calibaration:\n" + ENDC, cal)
         print("Noise:\n" + ENDC, noi)
         print()
 
@@ -140,6 +141,9 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         slc_tops_name = slc_name + ".tops"
         print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
         print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
+
+        # execute the pygamma command
+        #pg.par_S
 
     else:
         print(swaths)
@@ -188,10 +192,9 @@ def dem_import(dir_dem, dem_name):
     #pg.dem_import(dem, out, out_par)
 
 def main():
-    pass
     unzip(dir_data, dir_data)
-    slc_import(dir_data)
-    dem_import(dir_dem, dem_name)
+    #slc_import(dir_data)
+    #dem_import(dir_dem, dem_name)
 
 if __name__ == "__main__":
     main()
