@@ -4,29 +4,43 @@
 #########################################################################
 # Import SLCs and DEM to GAMMA software within a given directory structure
 #########################################################################
-
 import os
 from glob import glob
 import zipfile
 import re
 from recursive_regex import rec_reg
-import sys
+import argparse
 
-###########################
-# Import of gamma
-###########################
+##################
+# parse option to work locally or on server
+##################
 
-# try importing gamma (only works when working on the server) --> So check if working on server
-home = os.getenv("HOME")
-if "qa32" in home or "konsti??" in home: #TODO können ja einfach gegen unser home-directory checken
-    print("working on server...")
+# parse some arguments
+parser = argparse.ArgumentParser(description="Decide whether you are executing this locally (-l) or on the server (-s) and which steps to perform")
+# get positional arguments
+parser.add_argument("-m", "--machine", dest="m",
+                    help="(input) decide if working locally (0) or on the server (1)", default="l", type=str)
+
+parser.add_argument("-s", "--step", dest="steps",
+                    help="(input) which step to perform unzip (0), slc-import (1), dem_import (2)", default=0,
+                    nargs="+", type=int)
+
+
+# get the arguments
+global args
+args = parser.parse_args()
+print(args)
+if not args.m == "s":
+    print("working locally...")
+else:
     try:
         import py_gamma as pg
+        print("working on the server...")
     except ImportError as err:
-        print("source the god damn .profile")
-        exit()
-else:
-    print("working locally...")
+        print("Working on the server...")
+        print("However the py_gamma-module can not be loaded...")
+        print("Make sure its on $PATH? or PYTHONPATH?")
+        exit(-1)
 
 #############
 # some preparation
@@ -143,7 +157,12 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
 
         # execute the pygamma command
-        #pg.par_S
+        cmd = "{slc} {ann} {cal} {noi} {slc_par} {slc_file} {slc_tops_par} - - -".format(slc=slc, ann=ann, cal=cal,
+                                                                                           noi=noi, slc_par=slc_par_name,
+                                                                                           slc_file=slc_name, slc_tops_par=slc_tops_name)
+        print()
+        os.system(cmd) if not args.m else print(TRED + "working locally. Not calling pygamma" + ENDC)
+        print()
 
     else:
         print(swaths)
@@ -192,9 +211,15 @@ def dem_import(dir_dem, dem_name):
     #pg.dem_import(dem, out, out_par)
 
 def main():
-    unzip(dir_data, dir_data)
-    #slc_import(dir_data)
-    #dem_import(dir_dem, dem_name)
+    print("Steppsss")
+    print(args.steps)
+    for step in sorted(args.steps):
+        if int(step) == 0:
+            unzip(dir_data, dir_data)
+        elif int(step) == 1:
+            slc_import(dir_data)
+        elif int(step) == 2:
+            dem_import(dir_dem, dem_name)
 
 if __name__ == "__main__":
     main()
