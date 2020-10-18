@@ -8,9 +8,22 @@ import os
 import sys
 import glob
 import re
+import argparse
 
-# get all the zip files
-from typing import List
+##################
+# parse option to work locally or on server
+##################
+
+# parse some arguments
+parser = argparse.ArgumentParser(description="Decide whether you want to print the folder structur or create it")
+# get positional arguments
+parser.add_argument("-c", "--create", dest="c",
+                    help="(input) decide if testing (0) or creating (1)", default=0, type=int)
+
+# parse the arguments in a list
+global args
+args = parser.parse_args()
+
 
 zips = [x for x in os.listdir("../data") if x.endswith(".zip")]
 # get all the dates
@@ -112,7 +125,10 @@ for m in modes:
                 for d in comb_dates_all:
                     dirs = os.path.join(m, d)
                     print(dirs)
-                    os.makedirs(dirs)
+                    if args.c == 1:
+                        os.makedirs(dirs)
+                    else:
+                        pass
             else:
                 print("==============================")
                 print("Creating Intensity directories: ")
@@ -120,7 +136,10 @@ for m in modes:
                 for d in comb_dates_all:
                     dirs = os.path.join(m, d)
                     print(dirs)
-                    os.makedirs(dirs)
+                    if args.c == 1:
+                        os.makedirs(dirs)
+                    else:
+                        pass
 
     else:
         print("Folder structure already exists")
@@ -134,7 +153,10 @@ for dir in aux_dirs:
         print("==========")
         print("Creating Directory \n {}".format(dir))
         print("==========")
-        os.makedirs(dir)
+        if args.c == 1:
+            os.makedirs(dir)
+        else:
+            pass
 
 
 

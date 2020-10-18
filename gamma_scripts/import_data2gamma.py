@@ -19,11 +19,14 @@ import argparse
 parser = argparse.ArgumentParser(description="Decide whether you are executing this locally (-l) or on the server (-s) and which steps to perform")
 # get positional arguments
 parser.add_argument("-m", "--machine", dest="m",
-                    help="(input) decide if working locally (0) or on the server (1)", default="l", type=str)
+                    help="(input) decide if working locally (l) or on the server (s)", default="l", type=str)
 
 parser.add_argument("-s", "--step", dest="steps",
                     help="(input) which step to perform unzip (0), slc-import (1), dem_import (2)", default=0,
                     nargs="+", type=int)
+
+parser.add_argument("-p", "--parallel", dest="parallel",
+                    help="parallel(1) or sequential(1)", default=0, type=int)
 
 
 # get the arguments
@@ -135,7 +138,7 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         date_str = ''.join(d)
 
         slc = rec_reg(safe_folder, ".*iw2.*-vv-{date}.*\.tiff$".format(date=date_str))[0]
-        ann = rec_reg(safe_folder, "^s1a.*iw2.*-vv-{date}".format(date=date_str))[0]
+        ann = rec_reg(safe_folder, "^s1a.*iw2.*-vv-{date}.*\.xml".format(date=date_str))[0]
         cal = rec_reg(safe_folder, "^cali.*iw2.*-vv-{date}".format(date=date_str))[0]
         noi = rec_reg(safe_folder, "^noi.*iw2.*-vv-{date}".format(date=date_str))[0]
 
@@ -144,25 +147,24 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         print()
         print(start_bold + start_underline + "Found the following ancillary files" + end_bold + end_underline)
         print("SLC:\n" + ENDC, slc)
-        print("Annotation:\n" + ENDC, noi)
+        print("Annotation:\n" + ENDC, ann)
         print("Calibaration:\n" + ENDC, cal)
         print("Noise:\n" + ENDC, noi)
         print()
 
         # create the .slc and the .slc.par
-        slc_name = os.path.splitext(os.path.basename(safe_folder))[0] + "_" + pol + "_" + sw + ".slc"
+        slc_name = os.path.join(dir_slc, os.path.splitext(os.path.basename(safe_folder))[0] + "_" + pol + "_" + sw + ".slc")
         slc_par_name = slc_name + ".par"
         slc_tops_name = slc_name + ".tops"
         print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
         print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
 
         # execute the pygamma command
-        cmd = "{slc} {ann} {cal} {noi} {slc_par} {slc_file} {slc_tops_par} - - -".format(slc=slc, ann=ann, cal=cal,
+        cmd = "par_S1_SLC {slc} {ann} {cal} {noi} {slc_par} {slc_file} {slc_tops_par} - - -".format(slc=slc, ann=ann, cal=cal,
                                                                                            noi=noi, slc_par=slc_par_name,
                                                                                            slc_file=slc_name, slc_tops_par=slc_tops_name)
-        print()
-        os.system(cmd) if not args.m else print(TRED + "working locally. Not calling pygamma" + ENDC)
-        print()
+        
+        os.system(cmd) if not args.m == "l" else print(TRED + "working locally. Not calling pygamma" + ENDC)
 
     else:
         print(swaths)
@@ -218,8 +220,7 @@ def main():
         if int(step) == 0:
             unzip(dir_data, dir_data)
         elif int(step) == 1:
-            print("actually trying to import...") if args.m
-            slc_import(dir_data) if not args.m else slc_import(dir_data, test=False)
+            slc_import(dir_data) if not args.m == "s" else slc_import(dir_data, test=False)
         elif int(step) == 2:
             dem_import(dir_dem, dem_name)
 
