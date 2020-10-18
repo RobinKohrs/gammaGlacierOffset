@@ -184,7 +184,7 @@ def slc_import(dir_data, test=True, num_scenes=2):
 # DEM_Import
 #########################################
 
-def dem_import(dir_dem, dem_name):
+def dem_import(dir_dem, dem_name, test=True):
     """
     Importing national icelandic DEM to GAMMA
     :param dir_dem: Directory containing the unzipped DEM which overlaps with the SLC at least in the areas of interest
@@ -208,16 +208,18 @@ def dem_import(dir_dem, dem_name):
     print(TGREEN + start_underline + "Creating DEM-Parameter-File" + end_underline)
     print(TGREEN + out_par + ENDC)
 
-    #pg.dem_import(dem, out, out_par)
+    if not test:
+        pg.dem_import(dem, out, out_par)
+    else:
+        print(start_bold + start_underline + TRED + "ONLY TESTING THE DEM IMPORT" + ENDC)
 
 def main():
-    print("Steppsss")
-    print(args.steps)
     for step in sorted(args.steps):
         if int(step) == 0:
             unzip(dir_data, dir_data)
         elif int(step) == 1:
-            slc_import(dir_data)
+            print("actually trying to import...") if args.m
+            slc_import(dir_data) if not args.m else slc_import(dir_data, test=False)
         elif int(step) == 2:
             dem_import(dir_dem, dem_name)
 
