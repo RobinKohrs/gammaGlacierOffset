@@ -126,7 +126,7 @@ def reading_QA(QA):
 def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     reg_offsets = os.path.join(dir, dates + ".reg_offsets")
     qmf_offsets = os.path.join(dir, dates + ".qmf_offsets")
-    QA = os.path.join(dir, dates + ".QA_temp")
+    QA = os.path.join(dir, dates + ".QA")
 
     # Metrics static ------
     # Window size <- to be optimised
@@ -159,15 +159,10 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
 
             print("=====")
             print("Initiating offsets with precise Sentinel-1 orbit information")
-            print("Iteration Number Patches: {}".format(i[0]))
-            print("Iteration Number Samples: {}".format(j[0]))
+            print("Number Patches: {}".format(i[1]))
+            print("Number Samples: {}".format(j[1]))
             print("Threshold is {}".format(threshold))
             print("=====")
-
-            # remove QA_temp file from which it needs to be read from new at every iteration
-            if os.path.isfile(QA):
-                os.remove(QA)
-                print("Removed QA_temp file . . .")
 
             pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
                           patches[iter_i], patches[iter_i], "-", oversampling, samples[iter_j], samples[iter_j],
@@ -198,13 +193,40 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
             optimisation[counter] = [patches[iter_i], samples[iter_j], {"metrics" : qa_read}]
             print(optimisation)
 
-            print(counter)
             counter += 1
             if counter == 3:
                 break
         if counter == 3:
             break
 
+
+    # trial zone
+    df = pd.DataFrame(optimisation.keys())
+    optimisation.values()
+
+    npatches = []
+    nsamples = []
+    mean = []
+    for iters in optimisation.values():
+        metr = iters[2].values()
+        npatches.append(iters[0])
+        nsamples.append(iters[1])
+        for i in metr:
+            lst_metr = list(i.values())
+
+            # calculating mean of metrics
+            i.update({"mean": round((float(lst_metr[0]) + float(lst_metr[1])) / 2, 4)})
+            mean.append(list(i.values())[2])
+
+    df.insert(1, "mean_sd", mean)
+    df.insert(2, "patches", npatches)
+    df.insert(3, "samples", nsamples)
+    print(df)
+
+    # write metrics out as csv
+    df.to_csv(path_or_buf=QA)
+
+    # rank results
 
 def main():
 
