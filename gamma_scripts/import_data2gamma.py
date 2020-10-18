@@ -218,6 +218,7 @@ def main():
         if int(step) == 0:
             unzip(dir_data, dir_data)
         elif int(step) == 1:
+            print("actually trying to import...") if args.m
             slc_import(dir_data) if not args.m else slc_import(dir_data, test=False)
         elif int(step) == 2:
             dem_import(dir_dem, dem_name)
