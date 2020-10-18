@@ -6,6 +6,8 @@ import os
 import re
 import argparse
 import sys
+from io import StringIO
+import pandas as pd
 
 ##################
 # parse option to work locally or on server
@@ -96,13 +98,10 @@ def init_offset_orbit(slc1_par, slc2_par, off):
     except:
         print("Not successful")
 
-
 def reading_QA(QA):
 
-    # read file
-    with open(QA) as f:
-        lines = f.readlines()
-        f.close()
+    # read IO output QA_temp
+    lines = QA.split(sep="\n")
 
     # strip white space and \n
     lst = [x.strip() for x in lines]
@@ -117,9 +116,10 @@ def reading_QA(QA):
     try:
         sd_metric = re.findall("\d.\d*", statement)
     except:
-        "QA_temp console output document not readable"
+        print("QA_temp console output document not readable")
 
-    dict = {"range":sd_metric[0], "azimuth":sd_metric[1]}
+    dict = {"range" : sd_metric[0],
+            "azimuth" : sd_metric[1]}
     return (dict)
 
 
@@ -138,46 +138,72 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     samples_az = 32
 
     # Metrics looping -----
-    sizes = [2 ** x for x in range(1, 10)]
+    patches = [2 ** x for x in range(1, 10)]
     samples = [x ** 2 for x in range(5, 10)]
 
-    oversampling = 2  # what does that actually mean?
-    theshold = 0.001  # <- to be optimised
+    threshold = 0.001  # <- to be optimised
 
     # Sentinel-1 TOPS acquisitions need to be deramped. (Is this done already in S1_mosaic_TOPS?)
     deramping = 1
+    oversampling = 2  # what does that actually mean?
 
-    for i in enumerate(sizes):
+    # optimisation_dict = {iter : [rank, sizes, patches]}
+    optimisation = {}
 
-        print("=====")
-        print("Initiating offsets with precise Sentinel-1 orbit information")
-        print("Iteration Number: {}".format(i))
-        print("=====")
+    counter = 1
+    for i in enumerate(patches):
+        for j in enumerate(samples):
 
-        # remove QA_temp file from which it needs to be read from new at every iteration
-        # if os.path.isfile(QA):
-        #     os.remove(QA)
-        #     print("Removed QA_temp file . . .")
-        #
-        # pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
-        #               patch_rn, patch_az, "-", oversampling, samples_rn, samples_az,
-        #               theshold, "-", "-", deramping)
+            iter_i = i[0]
+            iter_j = j[0]
 
-        sys.stdout = open(QA, 'w')
-        pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
-        sys.stdout 
+            print("=====")
+            print("Initiating offsets with precise Sentinel-1 orbit information")
+            print("Iteration Number Patches: {}".format(i[0]))
+            print("Iteration Number Samples: {}".format(j[0]))
+            print("Threshold is {}".format(threshold))
+            print("=====")
 
-        qa_read = reading_QA(QA)
-        print("Metrics:", qa_read)
-        break
+            # remove QA_temp file from which it needs to be read from new at every iteration
+            if os.path.isfile(QA):
+                os.remove(QA)
+                print("Removed QA_temp file . . .")
 
-        # for sample in samples:
-        #     pass
+            pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
+                          patches[iter_i], patches[iter_i], "-", oversampling, samples[iter_j], samples[iter_j],
+                          threshold, "-", "-", deramping)
 
+            # store reference stdout
+            old_stdout = sys.stdout
+            # Init
+            result = StringIO()
+            sys.stdout = result
 
+            # offset fitting
+            print("=====")
+            print("Offset fitting")
+            pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
+            print("=====")
 
+            # Redirect stdout back to screen
+            sys.stdout = old_stdout
 
-    # os.remove(QA_temp)
+            # return value from stdout to file
+
+            out = result.getvalue()
+            qa_read = reading_QA(out)
+            print("Metrics:", qa_read)
+
+            # update optimisation dictionary
+            optimisation[counter] = [patches[iter_i], samples[iter_j], {"metrics" : qa_read}]
+            print(optimisation)
+
+            print(counter)
+            counter += 1
+            if counter == 3:
+                break
+        if counter == 3:
+            break
 
 
 def main():
@@ -190,15 +216,6 @@ def main():
             init_offset_orbit(slc1_par, slc2_par, off)
         elif int(step) == 2:
             optimise_offsets(slc1, slc2, slc1_par, slc2_par, off)
-        elif int(step) == 3:
-            reading_QA(os.path.join(dir, dates + ".QA_temp"))
-
-    # create_offsets(slc1_par, slc2_par)
-    # init_offset_orbit(slc1_par, slc2_par, off)
-    # optimise_offsets(slc1, slc2, slc1_par, slc2_par, off)
-    # pr=reading_QA(QA)
-    # print(pr)
-
 
 if __name__ == '__main__':
     main()
