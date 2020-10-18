@@ -194,11 +194,6 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
             print(optimisation)
 
             counter += 1
-            if counter == 3:
-                break
-        if counter == 3:
-            break
-
 
     # trial zone
     df = pd.DataFrame(optimisation.keys())
@@ -226,7 +221,7 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     # write metrics out as csv
     df.to_csv(path_or_buf=QA)
 
-    # rank results
+    # TODO: rank results
 
 def main():
 
