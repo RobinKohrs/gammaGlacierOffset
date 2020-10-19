@@ -30,12 +30,16 @@ Iteration über jede Szene. Main() enthält eine Loop, um über alle Szene zu it
  
 ***
 
-## 2. Mosaic (R)
+## 2. Coregistration
+
+### 2.1. Mosaicking bursts of subswath 2
+Iteration über jede Szene.
+
 _filename: mosaicTOPS.py_
 
 **What does it?**
 
-Iteration über jede Szene.
+
 
 SLC_mosaic_S1_TOPS nur IW2
 input: Table with slc - slc.par - slc.tops.par parameters
@@ -45,9 +49,12 @@ multi_look
 input:
 output:
 
-**How to call it in Gamma?**
 
-**Notes**
+## 2.2 Coregistration
+
+
+
+
 
 ***
 

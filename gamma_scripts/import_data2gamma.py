@@ -194,6 +194,8 @@ def dem_import(dir_dem, dem_name, test=True):
     :return: None, printing GAMMA output to console
     """
 
+    # TODO: Change CRS to WGS84
+
     dem = os.path.join(dir_dem, dem_name)
     out = os.path.join(dir_dem, "DEM")
     out_par = os.path.join(dir_dem, "DEM.par")
