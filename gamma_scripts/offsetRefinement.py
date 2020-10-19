@@ -229,12 +229,13 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
 
     npatches = []
     nsamples = []
+    nthresh = [ ]
     mean = []
     for iters in optimisation.values():
         metr = iters[3].values()
         npatches.append(iters[0])
         nsamples.append(iters[1])
-        nsamples.append(iters[2])
+        nthresh.append(iters[2])
         for i in metr:
             lst_metr = list(i.values())
 
