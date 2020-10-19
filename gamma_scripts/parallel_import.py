@@ -10,6 +10,8 @@ import zipfile
 import re
 from recursive_regex import rec_reg
 import argparse
+import multiprocessing as mp
+import time
 
 ##################
 # parse option to work locally or on server
@@ -179,8 +181,20 @@ def slc_import(dir_data, test=True, num_scenes=2):
                 print(TRED + "===== ABORTING ====" + ENDC)
             import_scene(s)
     else:
-        for s in safes:
-            import_scene(s)
+        if args.parallel:
+                print("Found: {} cores".format(mp.cpu_count()))
+                p = mp.Pool(8)
+                t1 = time.time()
+                p.map(import_scene, safes)
+                t2 = time.time()
+                print("Execution Time: {}".format(t2-t1))
+        else: 
+                t1 = time.time()
+                for s in safes:
+                    import_scene(s)
+                t2 = time.time()
+                print("Execution Time: {}".format(t2-t1))
+                    
 
 #########################################
 # DEM_Import
@@ -193,8 +207,6 @@ def dem_import(dir_dem, dem_name, test=True):
     :param dem_name: Full name of the DEM
     :return: None, printing GAMMA output to console
     """
-
-    # TODO: Change CRS to WGS84
 
     dem = os.path.join(dir_dem, dem_name)
     out = os.path.join(dir_dem, "DEM")
@@ -224,7 +236,7 @@ def main():
         elif int(step) == 1:
             slc_import(dir_data) if not args.m == "s" else slc_import(dir_data, test=False)
         elif int(step) == 2:
-            dem_import(dir_dem, dem_name) if not args.m == "s" else dem_import(dir_dem, dem_name, test=False)
+            dem_import(dir_dem, dem_name)
 
 if __name__ == "__main__":
     main()
