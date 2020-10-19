@@ -11,6 +11,7 @@ import argparse
 import sys
 from io import StringIO
 import pandas as pd
+import numpy as np
 
 ##################
 # parse option to work locally or on server
@@ -141,10 +142,14 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     samples_az = 32
 
     # Metrics looping -----
-    patches = [2 ** x for x in range(1, 10)]
-    samples = [x ** 2 for x in range(5, 10)]
+    patches = [2 ** x for x in range(6, 11)]
+    samples = [x ** 2 for x in range(5, 8)]
 
-    threshold = 0.001  # <- to be optimised
+    threshold = 0.15  # from user guide
+    thresholds = np.arange(0.1, 0.35, 0.05).tolist()
+    # round iterative
+    for i in enumerate(thresholds):
+        thresholds[i[0]] = round(i[1], 2)
 
     # Sentinel-1 TOPS acquisitions need to be deramped. (Is this done already in S1_mosaic_TOPS?)
     deramping = 1
@@ -153,50 +158,70 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     # optimisation_dict = {iter : [rank, sizes, patches]}
     optimisation = {}
 
+    # print loops to run:
     counter = 1
     for i in enumerate(patches):
         for j in enumerate(samples):
+            for k in enumerate(thresholds):
+                counter +=1
 
-            iter_i = i[0]
-            iter_j = j[0]
+    print("=====")
+    print("Number of Iterations to run: {}".format(counter))
 
-            print("=====")
-            print("Initiating offsets with precise Sentinel-1 orbit information")
-            print("Number Patches: {}".format(i[1]))
-            print("Number Samples: {}".format(j[1]))
-            print("Threshold is {}".format(threshold))
-            print("=====")
+    maxcounter = 2
+    counter = 0
+    for i in enumerate(patches):
+        for j in enumerate(samples):
+            for k in enumerate(thresholds):
+                print(k)
 
-            pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
-                          patches[iter_i], patches[iter_i], "-", oversampling, samples[iter_j], samples[iter_j],
-                          threshold, "-", "-", deramping)
+                iter_i = i[0]
+                iter_j = j[0]
+                iter_k = k[0]
 
-            # store reference stdout
-            old_stdout = sys.stdout
-            # Init
-            result = StringIO()
-            sys.stdout = result
 
-            # offset fitting
-            print("=====")
-            print("Offset fitting")
-            pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
-            print("=====")
+                print("Offset Optimisation for 'window size', 'samples per window' and 'threshold'")
+                print("Number Patches: {}".format(i[1]))
+                print("Number Samples: {}".format(j[1]))
+                print("Threshold is {}".format(k[1]))
+                print("=====")
 
-            # Redirect stdout back to screen
-            sys.stdout = old_stdout
+                pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
+                              patches[iter_i], patches[iter_i], "-", oversampling, samples[iter_j], samples[iter_j],
+                              thresholds[iter_k], "-", "-", deramping)
 
-            # return value from stdout to file
+                # store reference stdout
+                old_stdout = sys.stdout
+                # Init
+                result = StringIO()
+                sys.stdout = result
 
-            out = result.getvalue()
-            qa_read = reading_QA(out)
-            print("Metrics:", qa_read)
+                # offset fitting
+                print("=====")
+                print("Offset fitting")
+                pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
+                print("=====")
 
-            # update optimisation dictionary
-            optimisation[counter] = [patches[iter_i], samples[iter_j], {"metrics" : qa_read}]
-            print(optimisation)
+                # Redirect stdout back to screen
+                sys.stdout = old_stdout
 
-            counter += 1
+                # return value from stdout to file
+
+                out = result.getvalue()
+                qa_read = reading_QA(out)
+                print("Metrics:", qa_read)
+
+                # update optimisation dictionary
+                optimisation[counter] = [patches[iter_i], samples[iter_j], thresholds[iter_k], {"metrics" : qa_read}]
+                print(optimisation)
+
+                counter += 1
+                if counter == maxcounter:
+                    break
+            if counter == maxcounter:
+                break
+        if counter == maxcounter:
+            break
 
     # trial zone
     df = pd.DataFrame(optimisation.keys())
@@ -206,9 +231,10 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     nsamples = []
     mean = []
     for iters in optimisation.values():
-        metr = iters[2].values()
+        metr = iters[3].values()
         npatches.append(iters[0])
         nsamples.append(iters[1])
+        nsamples.append(iters[2])
         for i in metr:
             lst_metr = list(i.values())
 
@@ -219,7 +245,13 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     df.insert(1, "mean_sd", mean)
     df.insert(2, "patches", npatches)
     df.insert(3, "samples", nsamples)
+    df.insert(4, "threshold", nsamples)
     print(df)
+
+    # sorting
+    df.sort_values(by=["mean_sd"])
+    bestrun = df[1,]
+    print(bestrun)
 
     # write metrics out as csv
     df.to_csv(path_or_buf=QA)
