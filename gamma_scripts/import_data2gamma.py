@@ -222,7 +222,7 @@ def main():
         elif int(step) == 1:
             slc_import(dir_data) if not args.m == "s" else slc_import(dir_data, test=False)
         elif int(step) == 2:
-            dem_import(dir_dem, dem_name)
+            dem_import(dir_dem, dem_name) if not args.m == "s" else dem_import(dir_dem, dem_name, test=False)
 
 if __name__ == "__main__":
     main()
