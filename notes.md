@@ -11,12 +11,23 @@ Sub-Routinen enthält. Zuletzt bewerten wir den Optimierungsprozess der Tracking
 unsere Ergebnisse (4, 5).
 
 ## 0. Create Folder Structure
-_filename: makeFolderStructure.py_
+- filename: makeFolderStructure.py_
 
-***
+## Retrieve dates from SLC directory
+- Function to get back ALL files for one interfeometric pair splitted up in each date
+
+```python
+dates_dict = {"<date1>_<date2>":
+                    {"date1":[],
+                     "date2":[]},
+               "<date3>_<date4>":
+                    {"date3":[],
+                     "date4":[]},
+                    ...}
+```
 
 ## 1. SLC (R) and DEM Import (K)
-_filename: import_data2gamma.py_
+- filename: import_data2gamma.py
 
 
 **What does it?**
@@ -24,41 +35,88 @@ _filename: import_data2gamma.py_
 Iteration über jede Szene. Main() enthält eine Loop, um über alle Szene zu iterieren.
 - Nur IW2 (dort liegt der Gletscher)
 
-**How to call it in Gamma?**
 
 **Notes**
  
+## Tab-files für master und slave erstellen
+
+- Tabfiles erstellen für die NICHT-mosaikierten SLCs
+- Sowohl für Master als auch für slave, das es später bei der Ko-registrierung gebraucht wird
+- 
+
+```python
+for each <date>.slc
+    echo date*{.slc, .slc.par. tops.par} >> data/SLC/<date>.slc_tab
+```
+
+
+## 2 Mosaiikieren (debursten) of subswath 2
+- Brauchen wir für die ERstellung der MLIs!
+- Mosaiikiert werden müssen sowhol mast als auch sl!
+- (Deramp?, bei offset-fitting auch deramp flag) 
+
+
+```python
+for each <date>.slc:
+    SLC_mosaic_S1_tops <date>.slc_tab range_looks (10) azimuth_looks (2) 
+# Return <date>.slc (mosaic für den gesamten Subswath)
+# Return <date>slc.par (parameterfile des mosaikierten Subswath)
+```
+
+# 2.1 Multilooking vom Master
+
+- mutlilooking nur für den Master
+
+```commandline
+for each date_pair:
+    for each master:
+        multi_look <date>.slc <date>.slc.par <date>.slc.mli <date>.slc.mli.par ml_range ml_az
+# Return: multilook vom master <date>.slc.mli
+# Return: multilook parameter file vom master <date>.slc.mli.par
+ 
+```
+
+
+
+## 3. Erstellung von Lookuptable
+
+- Wichtig für das Hin und Her konvertieren zwischen Radar und Groundrange geometrien
+
+```python
+for each pair
+    for each master_date
+        gc_map <date>.slc.mli.par - dem.par dem eqa.dem.par eqa.dem <date>.lt 3 1 <master_date>.sim_sar
+
+#Return
+```
+
+## 4 Geocode
+
+```python
+for each pair
+    for each <date>.lt
+        geocode <date>.lt eqa.dem <width of dem> <date_master>.hgt <cols of master.mli> <rows of master.mli> 2 0 
+```
+
+## 5 Coregistration
+
+- ScanSAR_coreg.py
+
+```python
+for each pair
+    # create tab-file for each referenced slave
+    echo <slave_date*{.rscl, .rslc.par, rslc.TOPS.par}
+    ScanSAR_coreg.py <master>.tab master.slc <slave>.tab slave.slc
+    
+```
+
+```python
+
+```
+
 ***
 
-## 2. Coregistration
-
-### 2.1. Mosaicking bursts of subswath 2
-Iteration über jede Szene.
-
-_filename: mosaicTOPS.py_
-
-**What does it?**
-
-
-
-SLC_mosaic_S1_TOPS nur IW2
-input: Table with slc - slc.par - slc.tops.par parameters
-output: debursted & mosaicked
-
-multi_look
-input:
-output:
-
-
-## 2.2 Coregistration
-
-
-
-
-
-***
-
-## 3. Offset (power & fringe visibility)
+## 4. Offset (power & fringe visibility)
 ACHTUNG: Iteration über Szenenpaare
 
 
