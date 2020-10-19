@@ -8,7 +8,7 @@ import os
 from glob import glob
 import zipfile
 import re
-from recursive_regex import rec_reg
+from functions import rec_reg
 import argparse
 
 ##################
@@ -18,15 +18,13 @@ import argparse
 # parse some arguments
 parser = argparse.ArgumentParser(description="Decide whether you are executing this locally (-l) or on the server (-s) and which steps to perform")
 # get positional arguments
-parser.add_argument("-m", "--machine", dest="m",
-                    help="(input) decide if working locally (l) or on the server (s)", default="l", type=str)
+parser.add_argument("-l", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
 
 parser.add_argument("-s", "--step", dest="steps",
                     help="(input) which step to perform unzip (0), slc-import (1), dem_import (2)", default=0,
                     nargs="+", type=int)
 
-parser.add_argument("-p", "--parallel", dest="parallel",
-                    help="parallel(1) or sequential(1)", default=0, type=int)
+parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
 
 
 # get the arguments
@@ -153,7 +151,15 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         print()
 
         # create the .slc and the .slc.par
-        slc_name = os.path.join(dir_slc, os.path.splitext(os.path.basename(safe_folder))[0] + "_" + pol + "_" + sw + ".slc")
+        # slc_name = os.path.join(dir_slc, os.path.splitext(os.path.basename(safe_folder))[0] + "_" + pol + "_" + sw + ".slc")
+        # slc_par_name = slc_name + ".par"
+        # slc_tops_name = slc_name + ".tops"
+        # print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
+        # print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
+
+        # create the .slc and the .slc.par
+        slc_name = os.path.join(dir_slc,
+                                os.path.splitext(os.path.basename(safe_folder))[0] + "_" + pol + "_" + sw + ".slc")
         slc_par_name = slc_name + ".par"
         slc_tops_name = slc_name + ".tops"
         print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
