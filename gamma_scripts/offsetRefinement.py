@@ -21,17 +21,22 @@ import numpy as np
 parser = argparse.ArgumentParser(description="Decide whether you are executing this locally (-l) or on the server (-s) and which steps to perform")
 # get positional arguments
 parser.add_argument("-m", "--machine", dest="m",
-                    help="(input) decide if working locally (0) or on the server (1)", default="l", type=str)
+                    help="(input) decide if working locally (l) or on the server (s)", default="l", type=str)
 
 parser.add_argument("-s", "--step", dest="steps",
                     help="(input) which step to perform unzip (0), slc-import (1), dem_import (2)", default=0,
                     nargs="+", type=int)
 
+parser.add_argument("-i", "--iters", dest="i",
+                    help="(input) is number of iterations performed as optimisation of the offset [int]",
+                    default=3, type=int)
 
 # get the arguments
 global args
 args = parser.parse_args()
 print(args)
+print(args.i)
+
 if not args.m == "s":
     print("working locally...")
 else:
@@ -59,12 +64,19 @@ slc1_par = os.path.join(dir, "20160112.db.slc.par")
 slc2 = os.path.join(dir, "20160124.db.slc")
 slc2_par = os.path.join(dir, "20160124.db.slc.par")
 
+reg_offsets = os.path.join(dir, dates + ".reg_offsets")
+qmf_offsets = os.path.join(dir, dates + ".qmf_offsets")
+QA = os.path.join(dir, dates + ".QA")
 off = os.path.join(dir, dates + ".off")
 
 # 1 = Intensity tracking
 # 2 = Fringe visibility tracking
 tracking_algorithm = 1
 # tracking_algorithm = 2
+
+# Sentinel-1 TOPS acquisitions need to be deramped. (Is this done already in S1_mosaic_TOPS?)
+deramping = 1
+oversampling = 2  # what does that actually mean?
 
 
 #########################################
@@ -126,11 +138,25 @@ def reading_QA(QA):
             "azimuth" : sd_metric[1]}
     return (dict)
 
+def final_offset_fitting(slc1, slc2, slc1_par, slc2_par, off, patches, samples, threshold):
+
+    print("=====")
+    print("Final optimisation")
+    print("=====\n\n\n")
+
+    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
+                  patches, patches, "-", oversampling, samples, samples,
+                  threshold, "-", "-", deramping)
+
+    print("=====")
+    print("Offset fitting")
+    print("=====")
+    pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
+
+
+
 
 def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
-    reg_offsets = os.path.join(dir, dates + ".reg_offsets")
-    qmf_offsets = os.path.join(dir, dates + ".qmf_offsets")
-    QA = os.path.join(dir, dates + ".QA")
 
     # Metrics static ------
     # Window size <- to be optimised
@@ -151,10 +177,6 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     for i in enumerate(thresholds):
         thresholds[i[0]] = round(i[1], 2)
 
-    # Sentinel-1 TOPS acquisitions need to be deramped. (Is this done already in S1_mosaic_TOPS?)
-    deramping = 1
-    oversampling = 2  # what does that actually mean?
-
     # optimisation_dict = {iter : [rank, sizes, patches]}
     optimisation = {}
 
@@ -168,60 +190,63 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     print("=====")
     print("Number of Iterations to run: {}".format(counter))
 
-    maxcounter = 2
-    counter = 0
-    for i in enumerate(patches):
-        for j in enumerate(samples):
-            for k in enumerate(thresholds):
-                print(k)
+    def looping(maxiter):
+        count = 0
+        for i in enumerate(patches):
+            for j in enumerate(samples):
+                for k in enumerate(thresholds):
+                    print(k)
 
-                iter_i = i[0]
-                iter_j = j[0]
-                iter_k = k[0]
+                    iter_i = i[0]
+                    iter_j = j[0]
+                    iter_k = k[0]
 
 
-                print("Offset Optimisation for 'window size', 'samples per window' and 'threshold'")
-                print("Number Patches: {}".format(i[1]))
-                print("Number Samples: {}".format(j[1]))
-                print("Threshold is {}".format(k[1]))
-                print("=====")
+                    print("Offset Optimisation for 'window size', 'samples per window' and 'threshold'")
+                    print("Number Patches: {}".format(i[1]))
+                    print("Number Samples: {}".format(j[1]))
+                    print("Threshold is {}".format(k[1]))
+                    print("=====")
 
-                pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
-                              patches[iter_i], patches[iter_i], "-", oversampling, samples[iter_j], samples[iter_j],
-                              thresholds[iter_k], "-", "-", deramping)
+                    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
+                                  patches[iter_i], patches[iter_i], "-", oversampling, samples[iter_j], samples[iter_j],
+                                  thresholds[iter_k], "-", "-", deramping)
 
-                # store reference stdout
-                old_stdout = sys.stdout
-                # Init
-                result = StringIO()
-                sys.stdout = result
+                    # store reference stdout
+                    old_stdout = sys.stdout
+                    # Init
+                    result = StringIO()
+                    sys.stdout = result
 
-                # offset fitting
-                print("=====")
-                print("Offset fitting")
-                pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
-                print("=====")
+                    # offset fitting
+                    print("=====")
+                    print("Offset fitting")
+                    pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
+                    print("=====")
 
-                # Redirect stdout back to screen
-                sys.stdout = old_stdout
+                    # Redirect stdout back to screen
+                    sys.stdout = old_stdout
 
-                # return value from stdout to file
+                    # return value from stdout to file
 
-                out = result.getvalue()
-                qa_read = reading_QA(out)
-                print("Metrics:", qa_read)
+                    out = result.getvalue()
+                    qa_read = reading_QA(out)
+                    print("Metrics:", qa_read)
 
-                # update optimisation dictionary
-                optimisation[counter] = [patches[iter_i], samples[iter_j], thresholds[iter_k], {"metrics" : qa_read}]
-                print(optimisation)
+                    # update optimisation dictionary
+                    optimisation[count] = [patches[iter_i], samples[iter_j], thresholds[iter_k], {"metrics" : qa_read}]
+                    print(optimisation)
 
-                counter += 1
-                if counter == maxcounter:
-                    break
-            if counter == maxcounter:
-                break
-        if counter == maxcounter:
-            break
+                    count += 1
+
+                    if count == maxiter:
+                        print(counter)
+                        return optimisation
+
+    optimisation = {0: [64, 25, 0.1, {'metrics': {'range': '0.1085', 'azimuth': '0.1246'}}], 1: [64, 25, 0.15, {'metrics': {'range': '0.0675', 'azimuth': '0.0993'}}]}
+
+    optimisation = looping(maxiter=args.i)
+
 
     # trial zone
     df = pd.DataFrame(optimisation.keys())
@@ -246,18 +271,23 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off):
     df.insert(1, "mean_sd", mean)
     df.insert(2, "patches", npatches)
     df.insert(3, "samples", nsamples)
-    df.insert(4, "threshold", nsamples)
+    df.insert(4, "threshold", nthresh)
     print(df)
 
     # sorting
-    df.sort_values(by=["mean_sd"])
-    bestrun = df[1,]
-    print(bestrun)
-
+    df = df.sort_values(by=["mean_sd"], ascending=True)
     # write metrics out as csv
     df.to_csv(path_or_buf=QA)
 
-    # TODO: rank results
+    # grep bestrun arguments
+    bestrun = df.iloc[0]
+    print("Best run: \n\n", bestrun)
+
+    # TODO: index best fits
+    patches = bestrun
+
+    # run final optimisation
+    # final_offset_fitting(slc1, slc1_par, slc2, slc2_par, off, patches, samples, threshold)
 
 def main():
 
