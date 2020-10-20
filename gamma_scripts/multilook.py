@@ -22,14 +22,13 @@ parser.add_argument("-a", "--azimuth", dest="azimuth",
                     help="(input) looks in azimuth (default = 2)", default=2, type=int)
 args = parser.parse_args()
 
-# some paths
 slc_dir = "../data/SLC"
 
-def multilook(slc_dir, image = "main"):
-    # multilook is necessary on the non mosaiced main for each pair
-    master_slcs_pars = get_files(slc_dir, image=image, file_type=[".slc", ".par"])
+def multilook(slc_dir, image):
+    # multilook is necessary on the (non) mosaiced!!! main for each pair
+    master_slcs_pars = get_files(slc_dir, image=image, file_ending=[".mosaic_slc", "mosaic_slc.par"])
     for image_pair in master_slcs_pars:
-        slc = [os.path.join(slc_dir, x) for x in image_pair if x.endswith(".slc")][0]
+        slc = [os.path.join(slc_dir, x) for x in image_pair if x.endswith(".mosaic_slc")][0]
         slc_par = [os.path.join(slc_dir, x) for x in image_pair if x.endswith(".par")][0]
         mli_name = slc[0:-4] + ".mli"
         mli_par_name = slc[0:-4] + ".mli.par"
@@ -42,15 +41,11 @@ def multilook(slc_dir, image = "main"):
 
         print(cmd) if args.print else os.system(cmd)
 
-
-
-
-
 def main():
-    if args.image == "main":
-        multilook(slc_dir, image="main")
+    if args.image == "main" or args.image == "m":
+        multilook(slc_dir, image="m")
     else:
-        multilook(slc_dir, image="secondary")
+        multilook(slc_dir, image="s")
 
 if __name__ == "__main__":
     main()

@@ -10,36 +10,18 @@ IW2, welcher ausschließlich für unsere Prozessierung notwendig ist und (3) das
 Sub-Routinen enthält. Zuletzt bewerten wir den Optimierungsprozess der Tracking-Window-Größe und visualisieren 
 unsere Ergebnisse (4, 5).
 
-## Retrieve dates from SLC directory
-- Function to get back ALL files for one interfeometric pair splitted up in each date
-
-```python
-dates_dict = {"<date1>_<date2>":
-                    {"date1":[],
-                     "date2":[]},
-               "<date3>_<date4>":
-                    {"date3":[],
-                     "date4":[]},
-                    ...}
-```
-
-## 0. Create Folder Structure
-- Erstellt die Ordnerstruktur
-
 ## 1. SLC (R) and DEM Import (K)
-- It's really important to name the file: 
+- **Namen für die zu importierenden SLCs-Derivate** 
     + <date>_<swath>_<pol>.slc
     + <date>_<swath>_<pol>.slc.par
     + <date>_<swath>_<pol>.slc.tops_par
 
-- 
-
- 
-## Tab-files für master und slave erstellen
+## 2. Tab-files für master und slave erstellen
 
 - Tabfiles erstellen für die NICHT-mosaikierten SLCs
 - Sowohl für Master als auch für slave, da es später bei der Ko-registrierung gebraucht wird
-- 
+- Da wir die tab-files aus dem gamma-scripts ordner erstellen müssen die Pfade der SLC-Derivate (auch wenn dir Tab-files in den gleichen Directories wie die SLC-Derivate ligen) 
+mit dem relativen Pfad vom ausführenden (`~/gamma_scripts`) zum SLC (`data/SLC`) reingeschrieben werden 
 
 ```python
 for each <date>
@@ -51,8 +33,11 @@ for each <date>
 
 
 ## 2 Mosaiikieren (debursten) of subswath 2
+
+**NAMENS-KONVENTION**
+
 - Brauchen wir für die ERstellung der MLIs!
-- Mosaiikiert werden müssen sowhol mast als auch sl!
+- Wir mosaikieren sowohl main als auch secondary
 - (Deramp?, bei offset-fitting auch deramp flag) 
 
 

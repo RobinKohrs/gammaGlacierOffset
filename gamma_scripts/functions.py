@@ -90,7 +90,7 @@ def file_dict(slc_dir):
 
     return d
 
-def get_files(slc_dir, image="main", file_type=[".slc"]):
+def get_files(slc_dir, image="main", file_ending=[".slc"]):
     """
     retrieve a list of files (.slc, .slc.par, .slc_tab, .slc.tops_par) from either the main or the secondary
     :param type:
@@ -105,8 +105,9 @@ def get_files(slc_dir, image="main", file_type=[".slc"]):
             date_main = date_pair[0:8]
             key1 = date_pair
             key2 = date_main
-            files = [file for file in files_dict[key1][key2] for ty in file_type if file.endswith(ty)]
-            if "mosaic" in file_type:
+            files = [file for file in files_dict[key1][key2] for ty in file_ending if file.endswith(ty)]
+            # check if mosaic is a substring of any of the elements of file_ending
+            if any("mosaic" in ele for ele in file_ending):
                 pass
             else:
                 files = [x for x in files if "mosaic" not in x]
@@ -116,8 +117,9 @@ def get_files(slc_dir, image="main", file_type=[".slc"]):
             date_secondary = date_pair[9:17]
             key1 = date_pair
             key2 = date_secondary
-            files = [file for file in files_dict[key1][key2] for ty in file_type if file.endswith(ty)]
-            if "mosaic" in file_type:
+            files = [file for file in files_dict[key1][key2] for ty in file_ending if file.endswith(ty)]
+            # check if mosaic is a substring of any of the elements of file_ending
+            if any("mosaic" in ele for ele in file_ending):
                 pass
             else:
                 files = [x for x in files if "mosaic" not in x]
@@ -128,7 +130,10 @@ def get_files(slc_dir, image="main", file_type=[".slc"]):
             print(TRED + "Choose between Main or Secondary images to retrieve files" + ENDC)
             exit()
 
-    return [f for sublist in files_all for f in sublist]
+    # return flattened list with all files
+    #return [f for sublist in files_all for f in sublist]
+    # return list of lists
+    return files_all
 
 
 def rec_reg(path, regex):
@@ -149,5 +154,5 @@ if __name__ == "__main__":
     # This module is intended to be imported
     #######################
     slc_dir = "../data/SLC"
-    b = get_files(slc_dir, file_type=[".slc"], image="s")
+    b = get_files(slc_dir, file_ending=["mosaic.mli"], image="m")
     print(b)

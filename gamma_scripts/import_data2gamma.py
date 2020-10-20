@@ -54,7 +54,7 @@ r_t, c_t = int(r_t), int(c_t)
 dir_data = "../data"
 dir_slc = os.path.join(dir_data, "SLC")
 dir_dem = os.path.join(dir_data, "DEM")
-dem_name = "Island_DEM_WGS84.vrt"
+dem_name = "dem_gamma_wgs84.vrt"
 
 #######
 # Unzip

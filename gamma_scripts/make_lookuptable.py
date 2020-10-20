@@ -22,8 +22,19 @@ args =parser.parse_args()
 
 def create_lookup(slc_dir, image="main"):
     # get the necessary files
-    master_slcs_pars = get_files(slc_dir, image=image, file_type=[".mli.par", ".mli.par"])
-    print(master_slcs_pars)
+    # important is to put mosaic in the file ending
+    main_slcs_pars = get_files(slc_dir, image=image, file_ending=["mosaic.mli.par"])
+    for ele in main_slcs_pars:
+        # should return a list of lists with only one entry
+        for mas in ele:
+            mosaic_mli_par = os.path.join(slc_dir, mas)
+            dem_par = [os.path.join(dem_dir,x) for x in os.listdir(dem_dir) if x.endswith(".par") and "DEM" in str.upper(x)]
+            print(dem_par)
+
+
+
+
+
 
 
 
@@ -33,4 +44,5 @@ def main():
 
 if __name__ == "__main__":
     slc_dir = "../data/SLC"
+    dem_dir = "../data/DEM"
     main()
