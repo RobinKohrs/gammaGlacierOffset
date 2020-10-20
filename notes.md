@@ -64,8 +64,8 @@ for each <date>.slc:
 ```
 
 # 2.1 Multilooking vom Master
-
 - mutlilooking nur für den Master
+- Multilooking vom mosaiikierten SLC!
 
 ```commandline
 for each date_pair:
