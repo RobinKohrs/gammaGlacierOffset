@@ -6,6 +6,18 @@ import re
 import os
 from datetime import date
 
+#############
+# some colors
+#############
+TGREEN = '\033[32m'  # Green Text
+ENDC = '\033[m'
+TRED = "\u001b[41;1m"
+TYEL = "\u001b[33;1m"
+start_bold = "\033[1m"
+end_bold = "\033[0;0m"
+start_underline = "\033[4m"
+end_underline = "\033[0m"
+
 def get_dates(slc_dir):
 
     files_dir = slc_dir
