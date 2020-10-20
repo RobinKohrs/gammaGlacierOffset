@@ -10,9 +10,6 @@ IW2, welcher ausschließlich für unsere Prozessierung notwendig ist und (3) das
 Sub-Routinen enthält. Zuletzt bewerten wir den Optimierungsprozess der Tracking-Window-Größe und visualisieren 
 unsere Ergebnisse (4, 5).
 
-## 0. Create Folder Structure
-- filename: makeFolderStructure.py_
-
 ## Retrieve dates from SLC directory
 - Function to get back ALL files for one interfeometric pair splitted up in each date
 
@@ -26,27 +23,30 @@ dates_dict = {"<date1>_<date2>":
                     ...}
 ```
 
+## 0. Create Folder Structure
+- Erstellt die Ordnerstruktur
+
 ## 1. SLC (R) and DEM Import (K)
-- filename: import_data2gamma.py
+- It's really important to name the file: 
+    + <date>_<swath>_<pol>.slc
+    + <date>_<swath>_<pol>.slc.par
+    + <date>_<swath>_<pol>.slc.tops_par
 
+- 
 
-**What does it?**
-
-Iteration über jede Szene. Main() enthält eine Loop, um über alle Szene zu iterieren.
-- Nur IW2 (dort liegt der Gletscher)
-
-
-**Notes**
  
 ## Tab-files für master und slave erstellen
 
 - Tabfiles erstellen für die NICHT-mosaikierten SLCs
-- Sowohl für Master als auch für slave, das es später bei der Ko-registrierung gebraucht wird
+- Sowohl für Master als auch für slave, da es später bei der Ko-registrierung gebraucht wird
 - 
 
 ```python
-for each <date>.slc
-    echo date*{.slc, .slc.par. tops.par} >> data/SLC/<date>.slc_tab
+for each <date>
+    for each pol
+        <date>_<swath1>_<pol1>.slc <date>_<swath1>_<pol1>.slc.par <date>_<swath1>_<pol1>.slc.tops_par
+        <date>_<swath2>_<pol1>.slc <date>_<swath2>_<pol1>.slc.par <date>_<swath2>_<pol1>.slc.tops_par
+        <date>_<swath3>_<pol1>.slc <date>_<swath3>_<pol1>.slc.par <date>_<swath3>_<pol1>.slc.tops_par
 ```
 
 
