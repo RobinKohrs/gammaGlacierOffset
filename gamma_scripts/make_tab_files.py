@@ -20,10 +20,10 @@ args =parser.parse_args()
 
 def make_tab_files(dates_list):
     for date in dates_list:
-        slc = os.path.join(slc_dir, date + ".slc")
+        slc = [slc for slc in os.listdir(slc_dir) if date in slc and slc.endswith(".slc")][0]
         slc_par = slc + ".par"
-        slc_tops_par = slc + "tops.par"
-        tab_name = slc + "_tab"
+        slc_tops_par = slc + ".tops_par"
+        tab_name = os.path.join(slc_dir,slc + "_tab")
         tab_content = "{slc} {slc_par} {slc_tops_par}".format(slc=slc, slc_par=slc_par, slc_tops_par=slc_tops_par)
         if not args.print:
             with open("{}".format(tab_name), "w") as tab_file:

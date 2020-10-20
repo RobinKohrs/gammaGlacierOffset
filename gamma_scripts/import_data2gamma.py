@@ -8,7 +8,7 @@ import os
 from glob import glob
 import zipfile
 import re
-from functions import rec_reg
+from functions import *
 import argparse
 
 ##################
@@ -16,49 +16,36 @@ import argparse
 ##################
 
 # parse some arguments
-parser = argparse.ArgumentParser(description="Decide whether you are executing this locally (-l) or on the server (-s) and which steps to perform")
+parser = argparse.ArgumentParser(description="")
 # get positional arguments
-parser.add_argument("-l", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
-
 parser.add_argument("-s", "--step", dest="steps",
                     help="(input) which step to perform unzip (0), slc-import (1), dem_import (2)", default=0,
                     nargs="+", type=int)
 
 parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
 
+parser.add_argument("-sw", "--swaths", dest="swaths", help="Which swaths to use?", nargs="+", default=[2], type=int)
+parser.add_argument("-pol", "--polarizations", dest="pols", help="Which polarizations to use?", nargs="+", default=["vv"], type=str)
+
 
 # get the arguments
-global args
 args = parser.parse_args()
-print(args)
-if not args.m == "s":
+if args.print:
     print("working locally...")
 else:
     try:
         import py_gamma as pg
         print("working on the server...")
     except ImportError as err:
-        print("Working on the server...")
+        print("Trying to import gamma")
         print("However the py_gamma-module can not be loaded...")
         print("Make sure its on $PATH? or PYTHONPATH?")
         exit(-1)
 
-#############
-# some preparation
-#############
-TGREEN = '\033[32m'  # Green Text
-ENDC = '\033[m'
-TRED = "\u001b[41;1m"
-TYEL = "\u001b[33;1m"
-start_bold = "\033[1m"
-end_bold = "\033[0;0m"
-start_underline = "\033[4m"
-end_underline = "\033[0m"
 
 # get dimensions of terminal
 r_t, c_t = os.popen('stty size', 'r').read().split()
 r_t, c_t = int(r_t), int(c_t)
-
 
 ############
 # directories
@@ -115,19 +102,42 @@ def unzip(dir_data, out_dir):
 #########################################
 
 
-def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
+def import_scene(safe_folder):
     """
 
     :param safe_folder: path to the SAFE-folder that is going to be imported
     :param swaths: list os subswaths to import
     :return: None
     """
-    if not swaths:
+
+    # which subswaths to import?
+    if len(args.swaths) == 1:
+        if args.swaths[0] == 1:
+            sw = ["iw1"]
+        elif args.swaths[0] == 2:
+            sw = ["iw2"]
+        else:
+            sw = ["iw3"]
+
+    elif len(args.swaths) == 2:
+        if 1 in args.swaths and 2 in args.swaths:
+            sw = ["iw1", "iw2"]
+        elif 3 in args.swaths and 2 in args.swaths:
+            sw = ["iw3", "iw2"]
+        else:
+            sw = ["iw3", "iw1"]
+    else:
+        sw = ["iw1", "iw2", "iw3"]
+
+    # get pol TODO: make work for more polarizations?
+    pol = args.pols
+
+    if len(sw) == 1 and len(pol) == 1:
         print()
         print("#"*(c_t//3) + "   IMPORT SLC  " + "#"*(c_t//3))
         print()
         print("=====")
-        print("Only importing subswath 2")
+        print("Only importing subswath {}".format(sw[0]))
         print("=====")
         print()
 
@@ -135,10 +145,10 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         d = m.groups()
         date_str = ''.join(d)
 
-        slc = rec_reg(safe_folder, ".*iw2.*-vv-{date}.*\.tiff$".format(date=date_str))[0]
-        ann = rec_reg(safe_folder, "^s1a.*iw2.*-vv-{date}.*\.xml".format(date=date_str))[0]
-        cal = rec_reg(safe_folder, "^cali.*iw2.*-vv-{date}".format(date=date_str))[0]
-        noi = rec_reg(safe_folder, "^noi.*iw2.*-vv-{date}".format(date=date_str))[0]
+        slc = rec_reg(safe_folder, ".*{sw}.*-{pol}-{date}.*\.tiff$".format(sw=sw[0], pol=pol[0],date=date_str))[0]
+        ann = rec_reg(safe_folder, "^s1a.*{sw}.*-{pol}-{date}.*\.xml".format(sw=sw[0], pol=pol[0], date=date_str))[0]
+        cal = rec_reg(safe_folder, "^cali.*{sw}.*-{pol}-{date}".format(sw=sw[0], pol=pol[0], date=date_str))[0]
+        noi = rec_reg(safe_folder, "^noi.*{sw}.*-{pol}-{date}".format(sw=sw[0], pol=pol[0], date=date_str))[0]
 
         print(start_bold + start_underline +"Processing SAFE:\n"+ end_bold + end_underline,
               TYEL + safe_folder + ENDC)
@@ -151,42 +161,71 @@ def import_scene(safe_folder, sw = "iw2", pol = "vv", *swaths):
         print()
 
         # create the .slc and the .slc.par
-        # slc_name = os.path.join(dir_slc, os.path.splitext(os.path.basename(safe_folder))[0] + "_" + pol + "_" + sw + ".slc")
-        # slc_par_name = slc_name + ".par"
-        # slc_tops_name = slc_name + ".tops"
-        # print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
-        # print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
-
-        # create the .slc and the .slc.par
-        slc_name = os.path.join(dir_slc,
-                                os.path.splitext(os.path.basename(safe_folder))[0] + "_" + pol + "_" + sw + ".slc")
+        slc_name = os.path.join(dir_slc, date_str + "_" + pol[0] + "_" + sw[0] + ".slc")
         slc_par_name = slc_name + ".par"
-        slc_tops_name = slc_name + ".tops"
+        slc_tops_par = slc_name + ".tops_par"
+
         print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
-        print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
+        print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_par) + ENDC)
 
         # execute the pygamma command
         cmd = "par_S1_SLC {slc} {ann} {cal} {noi} {slc_par} {slc_file} {slc_tops_par} - - -".format(slc=slc, ann=ann, cal=cal,
                                                                                            noi=noi, slc_par=slc_par_name,
-                                                                                           slc_file=slc_name, slc_tops_par=slc_tops_name)
+                                                                                           slc_file=slc_name, slc_tops_par=slc_tops_par)
         
-        os.system(cmd) if not args.m == "l" else print(TRED + "working locally. Not calling pygamma" + ENDC)
+        os.system(cmd) if not args.print else print(TRED + "working locally. Not calling pygamma" + ENDC)
 
-    else:
-        print(swaths)
+    elif len(sw) == 2:
+        print()
+        print("#"*(c_t//3) + "   IMPORT SLC  " + "#"*(c_t//3))
+        print()
+        print("=====")
+        print("Only importing subswaths {}, {}".format(sw[0], sw[1]))
+        print("=====")
+        print()
+
+        m = re.match(".*__1SDV_(\d{4})(\d{2})(\d{2})", safe_folder)
+        d = m.groups()
+        date_str = ''.join(d)
+
+        slc = rec_reg(safe_folder, ".*{sw}.*-{pol}-{date}.*\.tiff$".format(sw=sw[0], pol=pol[0], date=date_str))[0]
+        ann = rec_reg(safe_folder, "^s1a.*{sw}.*-{pol}-{date}.*\.xml".format(sw=sw[i], pol=pol[i], date=date_str))[0]
+        cal = rec_reg(safe_folder, "^cali.*{sw}.*-{pol}-{date}".format(sw=sw[i], pol=pol[i], date=date_str))[0]
+        noi = rec_reg(safe_folder, "^noi.*{sw}.*-{pol}-{date}".format(sw=sw[i], pol=pol[i], date=date_str))[0]
+
+        print(start_bold + start_underline + "Processing SAFE:\n" + end_bold + end_underline,
+              TYEL + safe_folder + ENDC)
+        print()
+        print(start_bold + start_underline + "Found the following ancillary files" + end_bold + end_underline)
+        print("SLC:\n" + ENDC, slc)
+        print("Annotation:\n" + ENDC, ann)
+        print("Calibaration:\n" + ENDC, cal)
+        print("Noise:\n" + ENDC, noi)
+        print()
+
+        # create the .slc and the .slc.par
+        slc_name = os.path.join(dir_slc, date_str + "_" + pol[0] + "_" + sw[0] + ".slc")
+        slc_par_name = slc_name + ".par"
+        slc_tops_name = slc_name + ".tops"
+
+        print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
+        print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
+
+        # execute the pygamma command
+        cmd = "par_S1_SLC {slc} {ann} {cal} {noi} {slc_par} {slc_file} {slc_tops_par} - - -".format(slc=slc, ann=ann,
+                                                                                                    cal=cal,
+                                                                                                    noi=noi,
+                                                                                                    slc_par=slc_par_name,
+                                                                                                    slc_file=slc_name,
+                                                                                                    slc_tops_par=slc_tops_name)
+
+        os.system(cmd) if not args.print else print(TRED + "working locally. Not calling pygamma" + ENDC)
+
 
 def slc_import(dir_data, test=True, num_scenes=2):
     safes = [os.path.join(dir_data, x) for x in os.listdir(dir_data) if x.endswith(".SAFE")]
-    if test:
-        print()
-        print(start_bold + start_underline + TRED + "ONLY TESTING THE IMPORT" + ENDC)
-        for i, s in enumerate(safes, start=1):
-            if i == num_scenes:
-                print(TRED + "===== ABORTING ====" + ENDC)
-            import_scene(s)
-    else:
-        for s in safes:
-            import_scene(s)
+    for s in safes:
+        import_scene(s)
 
 #########################################
 # DEM_Import
@@ -218,19 +257,23 @@ def dem_import(dir_dem, dem_name, test=True):
     print(TGREEN + start_underline + "Creating DEM-Parameter-File" + end_underline)
     print(TGREEN + out_par + ENDC)
 
-    if not test:
+    if not args.print:
         pg.dem_import(dem, out, out_par)
     else:
         print(start_bold + start_underline + TRED + "ONLY TESTING THE DEM IMPORT" + ENDC)
 
 def main():
-    for step in sorted(args.steps):
-        if int(step) == 0:
+    if args.steps:
+        if 0 in args.steps:
             unzip(dir_data, dir_data)
-        elif int(step) == 1:
-            slc_import(dir_data) if not args.m == "s" else slc_import(dir_data, test=False)
-        elif int(step) == 2:
-            dem_import(dir_dem, dem_name) if not args.m == "s" else dem_import(dir_dem, dem_name, test=False)
+        elif 1 in args.steps:
+            slc_import(dir_data) if args.print else slc_import(dir_data, test=False)
+        elif 2 in args.steps:
+            dem_import(dir_dem, dem_name) if not args.print else dem_import(dir_dem, dem_name, test=False)
+        else:
+            unzip(dir_data, dir_data)
+            slc_import(dir_data) if args.print else slc_import(dir_data, test=False)
+            dem_import(dir_dem, dem_name) if not args.print else dem_import(dir_dem, dem_name, test=False)
 
 if __name__ == "__main__":
     main()
