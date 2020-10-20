@@ -98,6 +98,7 @@ def get_files(slc_dir, image="main", file_type=[".slc"]):
     :return:
     """
     files_dict = file_dict(slc_dir)
+    files_all = []
 
     for date_pair in files_dict:
         if image == "main" or image == "m":
@@ -109,6 +110,8 @@ def get_files(slc_dir, image="main", file_type=[".slc"]):
                 pass
             else:
                 files = [x for x in files if "mosaic" not in x]
+            files_all.append(files)
+
         elif image == "secondary" or image == "s":
             date_secondary = date_pair[9:17]
             key1 = date_pair
@@ -119,11 +122,13 @@ def get_files(slc_dir, image="main", file_type=[".slc"]):
             else:
                 files = [x for x in files if "mosaic" not in x]
 
+            files_all.append(files)
+
         else:
             print(TRED + "Choose between Main or Secondary images to retrieve files" + ENDC)
             exit()
 
-    return files
+    return [f for sublist in files_all for f in sublist]
 
 
 def rec_reg(path, regex):
@@ -139,6 +144,10 @@ def rec_reg(path, regex):
     return res
 
 if __name__ == "__main__":
+    #######################
+    # Only for testing on the command line
+    # This module is intended to be imported
+    #######################
     slc_dir = "../data/SLC"
-    b = get_files(slc_dir, file_type=[".slc", ".par"], image="")
+    b = get_files(slc_dir, file_type=[".slc"], image="s")
     print(b)
