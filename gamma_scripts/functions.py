@@ -28,7 +28,7 @@ def get_dates(slc_dir):
     dates = []
     for f in files:
         try:
-            m = re.search(r'.*1SDV_(\d{8}).*', f).group(1)
+            m = re.search(r'^(\d{8}).*', f).group(1)
             if not m in dates:
                 dates.append(m)
             else:
@@ -45,6 +45,7 @@ def make_keys_from_slcdir(slc_dir):
     :return: returns a list of strings like [<date1>_<date2>, <date1>_<date2>, ...]
     """
     dates = [x for x in get_dates(slc_dir)]
+
     dates_keys = []
     for d in dates:
         year1 = int(d[0:4])
@@ -89,6 +90,42 @@ def file_dict(slc_dir):
 
     return d
 
+def get_files(slc_dir, image="main", file_type=[".slc"]):
+    """
+    retrieve a list of files (.slc, .slc.par, .slc_tab, .slc.tops_par) from either the main or the secondary
+    :param type:
+    :param referece:
+    :return:
+    """
+    files_dict = file_dict(slc_dir)
+
+    for date_pair in files_dict:
+        if image == "main" or image == "m":
+            date_main = date_pair[0:8]
+            key1 = date_pair
+            key2 = date_main
+            files = [file for file in files_dict[key1][key2] for ty in file_type if file.endswith(ty)]
+            if "mosaic" in file_type:
+                pass
+            else:
+                files = [x for x in files if "mosaic" not in x]
+        elif image == "secondary" or image == "s":
+            date_secondary = date_pair[9:17]
+            key1 = date_pair
+            key2 = date_secondary
+            files = [file for file in files_dict[key1][key2] for ty in file_type if file.endswith(ty)]
+            if "mosaic" in file_type:
+                pass
+            else:
+                files = [x for x in files if "mosaic" not in x]
+
+        else:
+            print(TRED + "Choose between Main or Secondary images to retrieve files" + ENDC)
+            exit()
+
+    return files
+
+
 def rec_reg(path, regex):
     """
     find files recursively
@@ -101,14 +138,7 @@ def rec_reg(path, regex):
                 res.append(os.path.join(root, fname))
     return res
 
-
-if __name__ == "__main__":
-    print("Searching in the diretory: {}".format(sys.argv[1]))
-    print("With regex: {}".format(sys.argv[2]))
-    print()
-    res = rec_reg(sys.argv[1], sys.argv[2])
-    print(res)
-
 if __name__ == "__main__":
     slc_dir = "../data/SLC"
-    b = file_dict(slc_dir)
+    b = get_files(slc_dir, file_type=[".slc", ".par"], image="")
+    print(b)
