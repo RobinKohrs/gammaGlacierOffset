@@ -29,8 +29,9 @@ def make_mosaics(dates, range, azimuth):
     """
     # find corresponding files for the dates
     for date in dates:
+        slc = [os.path.join(slc_dir, slc) for slc in os.listdir(slc_dir) if date in slc and slc.endswith((".slc"))][0]
         tab_file = [os.path.join(slc_dir, x) for x in os.listdir(slc_dir) if date in x and x.endswith("slc_tab")][0]
-        slc_mosaic = os.path.join(slc_dir, date + ".mosaic_slc")
+        slc_mosaic = slc[:-4] + ".mosaic_slc"
         slc_mosaic_par = slc_mosaic + ".par"
         cmd = "SLC_mosaic_S1_TOPS {tab_file} {slc_mosaic} {slc_mosaic_par} {rl} {al}".format(tab_file = tab_file,
                                                                                              slc_mosaic = slc_mosaic,
