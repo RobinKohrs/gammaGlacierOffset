@@ -148,11 +148,29 @@ def rec_reg(path, regex):
                 res.append(os.path.join(root, fname))
     return res
 
+########################################################################
+# function to exract the value from the nth colum if the column matches something
+########################################################################
+
+def awkpy(file, pattern, col_to_extract):
+
+    if not os.path.isfile(file):
+        print("FILE YOU TRY TO FILTER DOESN'T EXIST"); exit()
+
+    with open(file, "r") as src:
+        for line_list in src:
+            # print(line_list)
+            fields = line_list.strip().split() # returns each line as a list of string
+            if [string for string in fields if pattern in string]:
+                return fields[col_to_extract-1]
+
 if __name__ == "__main__":
     #######################
     # Only for testing on the command line
     # This module is intended to be imported
     #######################
-    slc_dir = "../data/SLC"
-    b = get_files(slc_dir, file_ending=["mosaic.mli"], image="m")
-    print(b)
+    # slc_dir = "../data/SLC"
+    # b = get_files(slc_dir, file_ending=["mosaic.mli"], image="m")
+    # print(b)
+
+    awkpy()
