@@ -17,13 +17,12 @@ import argparse
 # parse some arguments
 parser = argparse.ArgumentParser(description="Decide whether you want to print the folder structur or create it")
 # get positional arguments
-parser.add_argument("-c", "--create", dest="c",
-                    help="(input) decide if testing (0) or creating (1)", default=0, type=int)
+parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
+args =parser.parse_args()
+
 
 # parse the arguments in a list
-global args
 args = parser.parse_args()
-
 
 zips = [x for x in os.listdir("../data") if x.endswith(".zip")]
 # get all the dates
@@ -112,34 +111,50 @@ print()
 # check if structure not already exists
 #seasons = ["../data/summer", "../data/winter"]
 # mode
-modes = ["../data/intensity", "../data/phase"]
+modes = ["intensity", "phase"]
+
+# create subdirectory for all files that come in tuples
+tuple_dir = "../data/tuples"; os.makedirs(tuple_dir) if not os.path.isdir(tuple_dir) else print(".....")
 
 # create both if not existent
-for m in modes:
-    print(m)
-    if not os.path.isdir(m):
-            if m == "./phase":
-                print("==============================")
-                print("Creating Phase directories: ")
-                print("==============================")
-                for d in comb_dates_all:
-                    dirs = os.path.join(m, d)
-                    print(dirs)
-                    if args.c == 1:
-                        os.makedirs(dirs)
-                    else:
-                        pass
-            else:
-                print("==============================")
-                print("Creating Intensity directories: ")
-                print("==============================")
-                for d in comb_dates_all:
-                    dirs = os.path.join(m, d)
-                    print(dirs)
-                    if args.c == 1:
-                        os.makedirs(dirs)
-                    else:
-                        pass
+for d in comb_dates_all:
+    for m in modes:
+        dirs = os.path.join(tuple_dir,d, m)
+        if args.print:
+            print("-----------------------------")
+            print("Creating Tuple Directory: {}".format(dirs))
+            print("-----------------------------")
+        else:
+            print("-----------------------------")
+            print("Creating Tuple Directory: {}".format(dirs))
+            print("-----------------------------")
+            os.makedirs(dirs)
+
+# for m in modes:
+#     print(m)
+#     if not os.path.isdir(m):
+#             if m == "./phase":
+#                 print("==============================")
+#                 print("Creating Phase directories: ")
+#                 print("==============================")
+#                 for d in comb_dates_all:
+#                     dirs = os.path.join(m, d)
+#                     print(dirs)
+#                     if args.c == 1:
+#                         os.makedirs(dirs)
+#                     else:
+#                         pass
+#             else:
+#                 print("==============================")
+#                 print("Creating Intensity directories: ")
+#                 print("==============================")
+#                 for d in comb_dates_all:
+#                     dirs = os.path.join(m, d)
+#                     print(dirs)
+#                     if args.c == 1:
+#                         os.makedirs(dirs)
+#                     else:
+#                         pass
 
     else:
         print("Folder structure already exists")
