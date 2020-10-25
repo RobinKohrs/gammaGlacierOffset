@@ -95,12 +95,9 @@ def initiate_offsets(slc1_par, slc2_par, off):
     print("Initiating offsets with precise Sentinel-1 orbit information")
     print("=====\n")
 
-    # TODO: why still not reaching beyond init_offset_orbit?
     pg.init_offset_orbit(slc1_par, slc2_par, off, r_pos, az_pos)
 
     print(f"Full initiation successful. \nOffset file: {off}.")
-
-
 
 def reading_QA(QA):
 
@@ -125,35 +122,6 @@ def reading_QA(QA):
     dict = {"range" : sd_metric[0],
             "azimuth" : sd_metric[1]}
     return (dict)
-
-def final_offset_fitting(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
-
-    print("=====")
-    print("Final optimisation")
-    print("=====\n\n")
-
-    # QA = "D:/Projects/gammaGlacierOffset/data/20200911_20200923.QA"
-    df = pd.read_csv(QA)
-
-    bestrun = df.iloc[0]
-    print("Optimising with the following parameters:")
-    print(bestrun)
-    print("\n\n")
-
-    patches = bestrun["patches"]
-    samples = bestrun["samples"]
-    threshold = bestrun["threshold"]
-
-    # GAMMA
-    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
-                  patches, patches, "-", oversampling, samples, samples,
-                  threshold, "-", "-", deramping)
-    print("=====")
-    print("Offset fitting")
-    print("=====")
-
-    # GAMMA
-    pg.offset_fit(reg, qmf, off, "-", "-")
 
 def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
 
@@ -291,13 +259,87 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
     # perform optimisation on patches, samples and threshold (more parameters can be added)
     looping(maxiter=args.i)
 
-def main():
 
+def final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
+
+    print("=====")
+    print("Final optimisation")
+    print("=====\n\n")
+
+    # QA = "D:/Projects/gammaGlacierOffset/data/20200911_20200923.QA"
+    df = pd.read_csv(QA)
+
+    bestrun = df.iloc[0]
+    print("Optimising with the following parameters:")
+    print(bestrun)
+    print("\n\n")
+
+    patches = bestrun["patches"]
+    samples = bestrun["samples"]
+    threshold = bestrun["threshold"]
+
+    # GAMMA
+    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
+                  patches, patches, "-", oversampling, samples, samples,
+                  threshold, "-", "-", deramping)
+    print("=====")
+    print("Offset fitting")
+    print("=====")
+
+    # GAMMA
+    pg.offset_fit(reg, qmf, off, "-", "-")
+
+def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling):
+
+    print("=====")
+    print("Offset Tracking")
+    print("=====")
+
+    az_start = "-" # 4000
+    az_end = "-"
+    r_start = "-" # 13000
+    r_end = "-"
+
+    int_filter = 1
+    pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off, # INPUT
+                           offset, ccp, "-", "-", # offs, ccp, r_patch_size, a_patch_size -> from off
+                           "-", oversampling, # text offsets
+                           "-", # threshold -> from off
+                           "-", "-", r_start, r_end, az_start, az_end, # starting and stopping pixel,
+                           "-", "-", # lanczos interp, bandwidth
+                           deramping, int_filter,
+                           0, 0, # printing
+                           "-") # cross-correlation for each patch
+
+def displacements(offset, ccp, slc1_par, off, disp,
+                  disp_real, disp_imag, disp_ints,
+                  out):
+
+    print("=====")
+    print("Displacement calculation")
+    print("=====")
+
+    mode = 2 # ground range geometry
+    thresh = "-"
+    pg.offset_tracking(offset, ccp, slc1_par, off, disp, "-",
+                       mode, thresh, "-")
+    # TODO: converting real, imaginary and magnitude to raster maps:
+    # where to get width from? from mli.par of reference slc...
+    width = 2800
+
+    pg.cpx_to_real(disp, disp_real, width, 0)
+    pg.cpx_to_real(disp, disp_imag, width, 1)
+    pg.cpx_to_real(disp, disp_ints, width, 2)
+
+    pg.raspwr(disp_real, width, "-", "-", "-", "-", "-", "-", "-", out)
+
+
+def main():
 
     # INPUT
     slc_dir =  "../data/test_offset/perf"
 
-    oversampling = 2  # what does that actually mean?
+    oversampling = 1  # what does that actually mean?
 
     # optional overview printing
     files = get_files(slc_dir = slc_dir, image = "m", file_ending=".slc.par")
@@ -316,6 +358,13 @@ def main():
         off = os.path.join(slc_dir, datepair + ".off")
         reg = os.path.join(slc_dir, datepair + ".reg")
         qmf = os.path.join(slc_dir, datepair + ".qmf")
+        offset = os.path.join(slc_dir, datepair + ".offset")
+        ccp = os.path.join(slc_dir, datepair + ".ccp") # cross-correlation for each patch
+        disp = os.path.join(slc_dir, datepair + ".disp")
+        disp_real = os.path.join(slc_dir, datepair + ".disp_real")
+        disp_imag = os.path.join(slc_dir, datepair + ".disp_imag")
+        disp_ints = os.path.join(slc_dir, datepair + ".disp_ints")
+        out = os.path.join(slc_dir, datepair + ".temp_displacement_map.tif")
 
         for i, slc_files in enumerate(dict[datepair].values()):
             # print(a)
@@ -335,7 +384,13 @@ def main():
             elif int(step) == 2:
                 optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
             elif int(step) == 3:
-                final_offset_fitting(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
+                final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
+            elif int(step) == 4:
+                tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling)
+            elif int(step) == 5:
+                displacements(offset, ccp, slc1_par, off, disp,
+                              disp_real, disp_imag, disp_ints,
+                              out)
             else:
                 pass
 
