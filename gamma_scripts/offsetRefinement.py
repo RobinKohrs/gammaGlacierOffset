@@ -77,35 +77,29 @@ def initiate_offsets(slc1_par, slc2_par, off):
 
     if os.path.isfile(off):
         os.remove(off)
-    try:
-        print("=====")
-        print("Creating offset file from SLC parameter file")
-        print("=====\n")
-        sysinput = sys.stdin # save std input
-        f = StringIO(override_input) # override input 7x
-        sys.stdin = f
-        print(sys.stdin)
 
-        pg.create_offset(slc1_par, slc2_par, off, args.trackingAlgorithm)
+    print("=====")
+    print("Creating offset file from SLC parameter file")
+    print("=====\n")
+    sysinput = sys.stdin # save std input
+    f = StringIO(override_input) # override input 7x
+    sys.stdin = f
+    print(sys.stdin)
 
-        f.close()
-        sys.stdin = sysinput # bring std input back
-        print("Offset creation successful\n")
+    pg.create_offset(slc1_par, slc2_par, off, args.trackingAlgorithm)
 
-    except:
-        print("Creation not failed")
+    f.close()
+    sys.stdin = sysinput # bring std input back
 
-    try:
-        print("=====")
-        print("Initiating offsets with precise Sentinel-1 orbit information")
-        print("=====\n")
+    print("=====")
+    print("Initiating offsets with precise Sentinel-1 orbit information")
+    print("=====\n")
 
-        # TODO: why still not reaching beyond init_offset_orbit?
-        pg.init_offset_orbit(slc1_par, slc2_par, off, r_pos, az_pos)
+    # TODO: why still not reaching beyond init_offset_orbit?
+    pg.init_offset_orbit(slc1_par, slc2_par, off, r_pos, az_pos)
 
-        print(f"Full initiation successful. \nOffset file {off} is stored in {slc_dir}.")
-    except:
-        print("Orbit initialisation failed")
+    print(f"Full initiation successful. \nOffset file: {off}.")
+
 
 
 def reading_QA(QA):
@@ -132,31 +126,38 @@ def reading_QA(QA):
             "azimuth" : sd_metric[1]}
     return (dict)
 
-def final_offset_fitting(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling, patches, samples, threshold):
+def final_offset_fitting(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
 
     print("=====")
     print("Final optimisation")
-    print("=====\n\n\n")
+    print("=====\n\n")
 
-    # TODO:
-    # Read QA.csv
-    # grep best run's parameters: patches, samples, threshold
-    # rerun step 0, 2
-    # run offset_pwr
-    # run offset_fit
-    # finish
+    # QA = "D:/Projects/gammaGlacierOffset/data/20200911_20200923.QA"
+    df = pd.read_csv(QA)
 
-    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg_offsets, qmf_offsets,
+    bestrun = df.iloc[0]
+    print("Optimising with the following parameters:")
+    print(bestrun)
+    print("\n\n")
+
+    patches = bestrun["patches"]
+    samples = bestrun["samples"]
+    threshold = bestrun["threshold"]
+
+    # GAMMA
+    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
                   patches, patches, "-", oversampling, samples, samples,
                   threshold, "-", "-", deramping)
-
     print("=====")
     print("Offset fitting")
     print("=====")
-    pg.offset_fit(reg_offsets, qmf_offsets, off, "-", "-")
+
+    # GAMMA
+    pg.offset_fit(reg, qmf, off, "-", "-")
 
 def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
 
+    # delete QA file
     if os.path.isfile(QA):
         os.remove(QA)
 
@@ -166,20 +167,19 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
 
     # Metrics looping -----
     # Window size <- to be optimised
-    patches = [2 ** x for x in range(6, 11)]
+    patches = [2 ** x for x in range(7, 11)]
 
     # Number of offset estimates, correlation function window size <- to be optimised
     samples = [x ** 2 for x in range(5, 8)]
 
     threshold = 0.15  # from user guide
-    thresholds = np.arange(0.1, 0.35, 0.05).tolist()
+    thresholds = np.arange(0.1, 0.3, 0.05).tolist()
     # round iterative
     for i in enumerate(thresholds):
         thresholds[i[0]] = round(i[1], 2)
 
     # optimisation_dict = {iter : [rank, sizes, patches]}
     optimisation = {}
-
 
     # print loops to run:
     counter = 1
@@ -191,8 +191,51 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
     print("=====")
     print("Number of Iterations to run: {}".format(counter))
 
+    def dataframe_creation(optimisation):
+        """
+        wrangling optimisation dictionary to dataframe
+        """
+
+        # t rial zone
+        df = pd.DataFrame(optimisation.keys())
+        optimisation.values()
+
+        # TODO: Sanatise!
+        npatches = []
+        nsamples = []
+        nthresh = []
+        mean = []
+        for iters in optimisation.values():
+            metr = iters[3].values()
+            npatches.append(iters[0])
+            nsamples.append(iters[1])
+            nthresh.append(iters[2])
+            for i in metr:
+                lst_metr = list(i.values())
+
+                # calculating mean of metrics
+                i.update({"mean": round((float(lst_metr[0]) + float(lst_metr[1])) / 2, 4)})
+                mean.append(list(i.values())[2])
+
+        df.insert(1, "mean_sd", mean)
+        df.insert(2, "patches", npatches)
+        df.insert(3, "samples", nsamples)
+        df.insert(4, "threshold", nthresh)
+        print(df)
+
+        # sorting
+        df = df.sort_values(by=["mean_sd"], ascending=True)
+
+        # grep bestrun arguments
+        bestrun = df.iloc[0]
+        print("Best run: \n\n", bestrun)
+
+        return df
+
     # TODO: ask Robin: loops more sanitised!?
+    # TODO: implement fringe visibility
     def looping(maxiter):
+
         count = 0
         for i, patch in enumerate(patches):
             for j, sample in enumerate(samples):
@@ -205,9 +248,10 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
                     print("Threshold is {}".format(thresh))
                     print("=====")
 
+                    # GAMMA
                     pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
-                                  patch, patch, "-", oversampling, sample, sample,
-                                  thresh, "-", "-", deramping)
+                              patch, patch, "-", oversampling, sample, sample,
+                              thresh, "-", "-", deramping)
 
                     # store reference stdout
                     old_stdout = sys.stdout
@@ -217,8 +261,10 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
                     # offset fitting
                     print("=====")
                     print("Offset fitting")
-                    pg.offset_fit(reg, qmf, off, "-", "-")
                     print("=====")
+
+                    # GAMMA
+                    pg.offset_fit(reg, qmf, off, "-", "-")
 
                     # Redirect stdout back to screen
                     sys.stdout = old_stdout
@@ -233,56 +279,20 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
                     optimisation[count] = [patch, sample, thresh, {"metrics" : qa_read}]
                     print(optimisation)
 
+                    # optimisation = {0: [64, 25, 0.1, {'metrics': {'range': '0.1583', 'azimuth': '0.1380'}}], 1: [64, 25, 0.15, {'metrics': {'range': '0.0675', 'azimuth': '0.0995'}}], 2: [64, 25, 0.2, {'metrics': {'range': '0.0679', 'azimuth': '0.1005'}}], 3: [64, 25, 0.25, {'metrics': {'range': '0.0583', 'azimuth': '0.1042'}}], 4: [64, 25, 0.3, {'metrics': {'range': '0.0622', 'azimuth': '0.1122'}}], 5: [64, 36, 0.1, {'metrics': {'range': '0.0740', 'azimuth': '0.1039'}}], 6: [64, 36, 0.15, {'metrics': {'range': '0.0729', 'azimuth': '0.1037'}}], 7: [64, 36, 0.2, {'metrics': {'range': '0.0660', 'azimuth': '0.0929'}}], 8: [64, 36, 0.25, {'metrics': {'range': '0.0579', 'azimuth': '0.0702'}}], 9: [64, 36, 0.3, {'metrics': {'range': '0.0560', 'azimuth': '0.0721'}}], 10: [64, 49, 0.1, {'metrics': {'range': '0.0742', 'azimuth': '0.1511'}}], 11: [64, 49, 0.15, {'metrics': {'range': '0.0739', 'azimuth': '0.1422'}}], 12: [64, 49, 0.2, {'metrics': {'range': '0.0652', 'azimuth': '0.1422'}}], 13: [64, 49, 0.25, {'metrics': {'range': '0.0584', 'azimuth': '0.1443'}}], 14: [64, 49, 0.3, {'metrics': {'range': '0.0566', 'azimuth': '0.1432'}}], 15: [128, 25, 0.1, {'metrics': {'range': '0.0499', 'azimuth': '0.0710'}}], 16: [128, 25, 0.15, {'metrics': {'range': '0.0465', 'azimuth': '0.0714'}}], 17: [128, 25, 0.2, {'metrics': {'range': '0.0452', 'azimuth': '0.0729'}}], 18: [128, 25, 0.25, {'metrics': {'range': '0.0589', 'azimuth': '0.0916'}}], 19: [128, 25, 0.3, {'metrics': {'range': '0.0605', 'azimuth': '0.0925'}}], 20: [128, 36, 0.1, {'metrics': {'range': '0.0442', 'azimuth': '0.0711'}}], 21: [128, 36, 0.15, {'metrics': {'range': '0.0435', 'azimuth': '0.0707'}}], 22: [128, 36, 0.2, {'metrics': {'range': '0.0438', 'azimuth': '0.0711'}}], 23: [128, 36, 0.25, {'metrics': {'range': '0.0410', 'azimuth': '0.0669'}}], 24: [128, 36, 0.3, {'metrics': {'range': '0.0283', 'azimuth': '0.0677'}}], 25: [128, 49, 0.1, {'metrics': {'range': '0.0600', 'azimuth': '0.1045'}}], 26: [128, 49, 0.15, {'metrics': {'range': '0.0573', 'azimuth': '0.1059'}}], 27: [128, 49, 0.2, {'metrics': {'range': '0.0446', 'azimuth': '0.1031'}}], 28: [128, 49, 0.25, {'metrics': {'range': '0.0390', 'azimuth': '0.1031'}}], 29: [128, 49, 0.3, {'metrics': {'range': '0.0392', 'azimuth': '0.1097'}}], 30: [256, 25, 0.1, {'metrics': {'range': '0.0292', 'azimuth': '0.0715'}}], 31: [256, 25, 0.15, {'metrics': {'range': '0.0295', 'azimuth': '0.0677'}}], 32: [256, 25, 0.2, {'metrics': {'range': '0.0300', 'azimuth': '0.0709'}}], 33: [256, 25, 0.25, {'metrics': {'range': '0.0301', 'azimuth': '0.0698'}}], 34: [256, 25, 0.3, {'metrics': {'range': '0.0320', 'azimuth': '0.0595'}}], 35: [256, 36, 0.1, {'metrics': {'range': '0.0310', 'azimuth': '0.0571'}}], 36: [256, 36, 0.15, {'metrics': {'range': '0.0283', 'azimuth': '0.0591'}}], 37: [256, 36, 0.2, {'metrics': {'range': '0.0279', 'azimuth': '0.0541'}}], 38: [256, 36, 0.25, {'metrics': {'range': '0.0227', 'azimuth': '0.0517'}}], 39: [256, 36, 0.3, {'metrics': {'range': '0.0260', 'azimuth': '0.0457'}}], 40: [256, 49, 0.1, {'metrics': {'range': '0.0289', 'azimuth': '0.0654'}}], 41: [256, 49, 0.15, {'metrics': {'range': '0.0225', 'azimuth': '0.0599'}}], 42: [256, 49, 0.2, {'metrics': {'range': '0.0212', 'azimuth': '0.0593'}}], 43: [256, 49, 0.25, {'metrics': {'range': '0.0197', 'azimuth': '0.0564'}}], 44: [256, 49, 0.3, {'metrics': {'range': '0.0228', 'azimuth': '0.0597'}}], 45: [512, 25, 0.1, {'metrics': {'range': '0.0160', 'azimuth': '0.0325'}}], 46: [512, 25, 0.15, {'metrics': {'range': '0.0162', 'azimuth': '0.0324'}}], 47: [512, 25, 0.2, {'metrics': {'range': '0.0148', 'azimuth': '0.0327'}}], 48: [512, 25, 0.25, {'metrics': {'range': '0.0146', 'azimuth': '0.0315'}}], 49: [512, 25, 0.3, {'metrics': {'range': '0.0154', 'azimuth': '0.0337'}}], 50: [512, 36, 0.1, {'metrics': {'range': '0.0177', 'azimuth': '0.0301'}}], 51: [512, 36, 0.15, {'metrics': {'range': '0.0173', 'azimuth': '0.0297'}}], 52: [512, 36, 0.2, {'metrics': {'range': '0.0165', 'azimuth': '0.0274'}}], 53: [512, 36, 0.25, {'metrics': {'range': '0.0154', 'azimuth': '0.0270'}}], 54: [512, 36, 0.3, {'metrics': {'range': '0.0156', 'azimuth': '0.0289'}}], 55: [512, 49, 0.1, {'metrics': {'range': '0.0176', 'azimuth': '0.0314'}}], 56: [512, 49, 0.15, {'metrics': {'range': '0.0143', 'azimuth': '0.0267'}}], 57: [512, 49, 0.2, {'metrics': {'range': '0.0135', 'azimuth': '0.0249'}}], 58: [512, 49, 0.25, {'metrics': {'range': '0.0125', 'azimuth': '0.0251'}}], 59: [512, 49, 0.3, {'metrics': {'range': '0.0097', 'azimuth': '0.0204'}}], 60: [1024, 25, 0.1, {'metrics': {'range': '0.0130', 'azimuth': '0.0152'}}], 61: [1024, 25, 0.15, {'metrics': {'range': '0.0130', 'azimuth': '0.0154'}}], 62: [1024, 25, 0.2, {'metrics': {'range': '0.0133', 'azimuth': '0.0165'}}], 63: [1024, 25, 0.25, {'metrics': {'range': '0.0131', 'azimuth': '0.0163'}}], 64: [1024, 25, 0.3, {'metrics': {'range': '0.0175', 'azimuth': '0.0226'}}], 65: [1024, 36, 0.1, {'metrics': {'range': '0.0132', 'azimuth': '0.0190'}}], 66: [1024, 36, 0.15, {'metrics': {'range': '0.0129', 'azimuth': '0.0189'}}]}
+                    out = dataframe_creation(optimisation)
+                    # write metrics out as csv
+                    out.to_csv(path_or_buf=QA)
+
                     count += 1
-
                     if count == maxiter:
-                        print(counter)
-                        return optimisation
+                        return None
 
-    # optimisation = {0: [64, 25, 0.1, {'metrics': {'range': '0.1583', 'azimuth': '0.1380'}}], 1: [64, 25, 0.15, {'metrics': {'range': '0.0675', 'azimuth': '0.0995'}}], 2: [64, 25, 0.2, {'metrics': {'range': '0.0679', 'azimuth': '0.1005'}}], 3: [64, 25, 0.25, {'metrics': {'range': '0.0583', 'azimuth': '0.1042'}}], 4: [64, 25, 0.3, {'metrics': {'range': '0.0622', 'azimuth': '0.1122'}}], 5: [64, 36, 0.1, {'metrics': {'range': '0.0740', 'azimuth': '0.1039'}}], 6: [64, 36, 0.15, {'metrics': {'range': '0.0729', 'azimuth': '0.1037'}}], 7: [64, 36, 0.2, {'metrics': {'range': '0.0660', 'azimuth': '0.0929'}}], 8: [64, 36, 0.25, {'metrics': {'range': '0.0579', 'azimuth': '0.0702'}}], 9: [64, 36, 0.3, {'metrics': {'range': '0.0560', 'azimuth': '0.0721'}}], 10: [64, 49, 0.1, {'metrics': {'range': '0.0742', 'azimuth': '0.1511'}}], 11: [64, 49, 0.15, {'metrics': {'range': '0.0739', 'azimuth': '0.1422'}}], 12: [64, 49, 0.2, {'metrics': {'range': '0.0652', 'azimuth': '0.1422'}}], 13: [64, 49, 0.25, {'metrics': {'range': '0.0584', 'azimuth': '0.1443'}}], 14: [64, 49, 0.3, {'metrics': {'range': '0.0566', 'azimuth': '0.1432'}}], 15: [128, 25, 0.1, {'metrics': {'range': '0.0499', 'azimuth': '0.0710'}}], 16: [128, 25, 0.15, {'metrics': {'range': '0.0465', 'azimuth': '0.0714'}}], 17: [128, 25, 0.2, {'metrics': {'range': '0.0452', 'azimuth': '0.0729'}}], 18: [128, 25, 0.25, {'metrics': {'range': '0.0589', 'azimuth': '0.0916'}}], 19: [128, 25, 0.3, {'metrics': {'range': '0.0605', 'azimuth': '0.0925'}}], 20: [128, 36, 0.1, {'metrics': {'range': '0.0442', 'azimuth': '0.0711'}}], 21: [128, 36, 0.15, {'metrics': {'range': '0.0435', 'azimuth': '0.0707'}}], 22: [128, 36, 0.2, {'metrics': {'range': '0.0438', 'azimuth': '0.0711'}}], 23: [128, 36, 0.25, {'metrics': {'range': '0.0410', 'azimuth': '0.0669'}}], 24: [128, 36, 0.3, {'metrics': {'range': '0.0283', 'azimuth': '0.0677'}}], 25: [128, 49, 0.1, {'metrics': {'range': '0.0600', 'azimuth': '0.1045'}}], 26: [128, 49, 0.15, {'metrics': {'range': '0.0573', 'azimuth': '0.1059'}}], 27: [128, 49, 0.2, {'metrics': {'range': '0.0446', 'azimuth': '0.1031'}}], 28: [128, 49, 0.25, {'metrics': {'range': '0.0390', 'azimuth': '0.1031'}}], 29: [128, 49, 0.3, {'metrics': {'range': '0.0392', 'azimuth': '0.1097'}}], 30: [256, 25, 0.1, {'metrics': {'range': '0.0292', 'azimuth': '0.0715'}}], 31: [256, 25, 0.15, {'metrics': {'range': '0.0295', 'azimuth': '0.0677'}}], 32: [256, 25, 0.2, {'metrics': {'range': '0.0300', 'azimuth': '0.0709'}}], 33: [256, 25, 0.25, {'metrics': {'range': '0.0301', 'azimuth': '0.0698'}}], 34: [256, 25, 0.3, {'metrics': {'range': '0.0320', 'azimuth': '0.0595'}}], 35: [256, 36, 0.1, {'metrics': {'range': '0.0310', 'azimuth': '0.0571'}}], 36: [256, 36, 0.15, {'metrics': {'range': '0.0283', 'azimuth': '0.0591'}}], 37: [256, 36, 0.2, {'metrics': {'range': '0.0279', 'azimuth': '0.0541'}}], 38: [256, 36, 0.25, {'metrics': {'range': '0.0227', 'azimuth': '0.0517'}}], 39: [256, 36, 0.3, {'metrics': {'range': '0.0260', 'azimuth': '0.0457'}}], 40: [256, 49, 0.1, {'metrics': {'range': '0.0289', 'azimuth': '0.0654'}}], 41: [256, 49, 0.15, {'metrics': {'range': '0.0225', 'azimuth': '0.0599'}}], 42: [256, 49, 0.2, {'metrics': {'range': '0.0212', 'azimuth': '0.0593'}}], 43: [256, 49, 0.25, {'metrics': {'range': '0.0197', 'azimuth': '0.0564'}}], 44: [256, 49, 0.3, {'metrics': {'range': '0.0228', 'azimuth': '0.0597'}}], 45: [512, 25, 0.1, {'metrics': {'range': '0.0160', 'azimuth': '0.0325'}}], 46: [512, 25, 0.15, {'metrics': {'range': '0.0162', 'azimuth': '0.0324'}}], 47: [512, 25, 0.2, {'metrics': {'range': '0.0148', 'azimuth': '0.0327'}}], 48: [512, 25, 0.25, {'metrics': {'range': '0.0146', 'azimuth': '0.0315'}}], 49: [512, 25, 0.3, {'metrics': {'range': '0.0154', 'azimuth': '0.0337'}}], 50: [512, 36, 0.1, {'metrics': {'range': '0.0177', 'azimuth': '0.0301'}}], 51: [512, 36, 0.15, {'metrics': {'range': '0.0173', 'azimuth': '0.0297'}}], 52: [512, 36, 0.2, {'metrics': {'range': '0.0165', 'azimuth': '0.0274'}}], 53: [512, 36, 0.25, {'metrics': {'range': '0.0154', 'azimuth': '0.0270'}}], 54: [512, 36, 0.3, {'metrics': {'range': '0.0156', 'azimuth': '0.0289'}}], 55: [512, 49, 0.1, {'metrics': {'range': '0.0176', 'azimuth': '0.0314'}}], 56: [512, 49, 0.15, {'metrics': {'range': '0.0143', 'azimuth': '0.0267'}}], 57: [512, 49, 0.2, {'metrics': {'range': '0.0135', 'azimuth': '0.0249'}}], 58: [512, 49, 0.25, {'metrics': {'range': '0.0125', 'azimuth': '0.0251'}}], 59: [512, 49, 0.3, {'metrics': {'range': '0.0097', 'azimuth': '0.0204'}}], 60: [1024, 25, 0.1, {'metrics': {'range': '0.0130', 'azimuth': '0.0152'}}], 61: [1024, 25, 0.15, {'metrics': {'range': '0.0130', 'azimuth': '0.0154'}}], 62: [1024, 25, 0.2, {'metrics': {'range': '0.0133', 'azimuth': '0.0165'}}], 63: [1024, 25, 0.25, {'metrics': {'range': '0.0131', 'azimuth': '0.0163'}}], 64: [1024, 25, 0.3, {'metrics': {'range': '0.0175', 'azimuth': '0.0226'}}], 65: [1024, 36, 0.1, {'metrics': {'range': '0.0132', 'azimuth': '0.0190'}}], 66: [1024, 36, 0.15, {'metrics': {'range': '0.0129', 'azimuth': '0.0189'}}]}
-
-    optimisation = looping(maxiter=args.i)
-
-    # trial zone
-    df = pd.DataFrame(optimisation.keys())
-    optimisation.values()
-
-    # TODO: Sanatise!
-    npatches = []
-    nsamples = []
-    nthresh = [ ]
-    mean = []
-    for iters in optimisation.values():
-        metr = iters[3].values()
-        npatches.append(iters[0])
-        nsamples.append(iters[1])
-        nthresh.append(iters[2])
-        for i in metr:
-            lst_metr = list(i.values())
-
-            # calculating mean of metrics
-            i.update({"mean": round((float(lst_metr[0]) + float(lst_metr[1])) / 2, 4)})
-            mean.append(list(i.values())[2])
-
-    df.insert(1, "mean_sd", mean)
-    df.insert(2, "patches", npatches)
-    df.insert(3, "samples", nsamples)
-    df.insert(4, "threshold", nthresh)
-    print(df)
-
-    # sorting
-    df = df.sort_values(by=["mean_sd"], ascending=True)
-    # write metrics out as csv
-    df.to_csv(path_or_buf=QA)
-
-    # grep bestrun arguments
-    bestrun = df.iloc[0]
-    print("Best run: \n\n", bestrun)
-
-    # run final optimisation (not necessarily)
-    # final_offset_fitting(slc1, slc1_par, slc2, slc2_par, off, patches, samples, threshold)
+    # perform optimisation on patches, samples and threshold (more parameters can be added)
+    looping(maxiter=args.i)
 
 def main():
+
 
     # INPUT
     slc_dir =  "../data/test_offset/perf"
@@ -325,7 +335,7 @@ def main():
             elif int(step) == 2:
                 optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
             elif int(step) == 3:
-                final_offset_fitting()
+                final_offset_fitting(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
             else:
                 pass
 
