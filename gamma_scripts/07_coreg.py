@@ -52,8 +52,10 @@ def coreg(slc_dir, dem_dir, tuples_dir):
         # main hgt image
         main_hgt = rec_reg(dem_dir, ".*{}.*\.hgt".format(main_date))[0]
 
+        out_dir = os.path.join(tuples_dir, date)
+
         # build cmd
-        cmd = f"ScanSAR_coreg.py {main_tab} {main_date} {second_tab} {second_date} {ref_tab} {main_hgt} 10 2 - - 0.8 0.01 0.8"
+        cmd = f"ScanSAR_coreg.py {main_tab} {main_date} {second_tab} {second_date} {ref_tab} {main_hgt} 10 2 - - 0.8 0.01 0.8 --wdir {out_dir}"
 
         os.system(cmd) if not args.print else print(cmd)
 
