@@ -34,4 +34,9 @@ relevant sind und so in den überordner date1_date2 gelegt werden können
 
 - Was sind die SLC1_ID und SLC2_ID Paramterter in `ScanSAR_coreg.py` und auf welche directories sollen die sich beziehen?
 
+***
+
+Cartus: 
+
+Init_offset_orbit bei auch koregistrierte SLCs?
         
