@@ -57,10 +57,6 @@ def coreg(slc_dir, dem_dir, tuples_dir):
 
         os.system(cmd) if not args.print else print(cmd)
 
-
-
-
-
 def main():
     slc_dir = "../data/SLC"
     dem_dir = "../data/DEM"
