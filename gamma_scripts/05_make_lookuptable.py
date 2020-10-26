@@ -22,8 +22,8 @@ def create_lookup(slc_dir, oversampling, image="main"):
     # important is to put mosaic in the file ending
     main_mli_slcs_pars = get_files(slc_dir, image=image, file_ending=["mosaic.mli.par"])
     # the dem and the dem parameter file must not be in the loop
-    dem_par = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith(".par") and "DEM" in str.upper(x)][0]
-    dem = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("DEM")][0]
+    dem_par = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith(".par") and "DEM" in str.upper(x) and "EQA" not in x][0]
+    dem = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("DEM") and "EQA" not in x][0]
 
     # every main_mli is the mosaiced, multilooked slc for the master
     for main_mli in main_mli_slcs_pars:
