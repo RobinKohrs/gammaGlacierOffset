@@ -24,7 +24,7 @@ data
     | date1_date2
         | intensity
         | phase
-    | date1_date2
+    | date3_date4
         | intensity
         | phase
 ```
