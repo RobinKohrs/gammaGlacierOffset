@@ -30,6 +30,10 @@ def create_lookup(slc_dir, oversampling, image="main"):
         # identifier is as always (not even close to always yet) date_pol_swath
         identifier = main_mli[0][0:15]
 
+        # EQA DEM
+        eqa = os.path.join(dem_dir, identifier + ".EQA_dem")
+        eqa_par = os.path.join(dem_dir, identifier + ".EQA_dem.par")
+
         # make the full path to the mosaiced, multilooked slc
         mosaic_mli_par = os.path.join(slc_dir, main_mli[0])
         # create the path for the lookup table
@@ -39,7 +43,7 @@ def create_lookup(slc_dir, oversampling, image="main"):
         ls_map = os.path.join(dem_dir, "ls_map")
 
         # build the cmd
-        cmd = f"gc_map {mosaic_mli_par} - {dem_par} {dem} ../data/DEM/EQA_dem.par ../data/DEM/EQA.dem {lookup_table} {oversampling} {oversampling} {inc} - - {ls_map} 8 2"
+        cmd = f"gc_map {mosaic_mli_par} - {dem_par} {dem} {eqa_par} {eqa} {lookup_table} {oversampling} {oversampling} {inc} - - {ls_map} 8 2"
         os.system(cmd) if not args.print else print(cmd)
 
 

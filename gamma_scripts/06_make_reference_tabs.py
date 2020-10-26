@@ -33,8 +33,8 @@ def geocode():
         # lookup-table path
         lt = lt
 
-        eqa_dem_par = rec_reg(dem_dir, ".*dem.par.*")[0]
-        eqa_dem = rec_reg(dem_dir, "EQA.dem$")[0]
+        eqa_dem_par = rec_reg(dem_dir, identifier + "\.EQA_dem.par$")[0]
+        eqa_dem = rec_reg(dem_dir, identifier + "\.EQA.dem$")[0]
         dem_par = rec_reg(dem_dir, "DEM.par$")[0]
         dem_width = int(awkpy(eqa_dem_par, "width", 2))
         hgt_out = os.path.join(dem_dir, identifier + ".hgt")
@@ -73,7 +73,7 @@ def reference_tabs():
                 print("        " + reference_tab_content)
 
 def main():
-    # geocode()
+    geocode()
     reference_tabs()
 
 
