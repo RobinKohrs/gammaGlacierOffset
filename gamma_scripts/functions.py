@@ -18,11 +18,11 @@ end_bold = "\033[0;0m"
 start_underline = "\033[4m"
 end_underline = "\033[0m"
 
-def get_dates(slc_dir):
+def get_dates(slc_dir, ending=".slc"):
 
     files_dir = slc_dir
     # find dates based on the slc-files
-    files = [f for f in os.listdir(files_dir) if f.endswith(".slc")]
+    files = [f for f in os.listdir(files_dir) if f.endswith(ending)]
 
     # return a list of the dates as strings
     dates = []
@@ -38,15 +38,16 @@ def get_dates(slc_dir):
 
     return dates
 
-def make_keys_from_slcdir(slc_dir):
+def make_keys_from_slcdir(slc_dir, ending=".slc"):
     """
 
     :param slc_dir:
     :return: returns a list of strings like [<date1>_<date2>, <date1>_<date2>, ...]
     """
-    dates = [x for x in get_dates(slc_dir)]
+    dates = [x for x in get_dates(slc_dir, ending)]
 
     dates_keys = []
+    print(dates)
     for d in dates:
         year1 = int(d[0:4])
         month1 = int(d[4:6])
@@ -68,10 +69,10 @@ def make_keys_from_slcdir(slc_dir):
     return dates_keys
 
 
-def file_dict(slc_dir):
+def file_dict(slc_dir, ending=".slc"):
 
     # make keys with <date2>_<date2>
-    keys = make_keys_from_slcdir(slc_dir)
+    keys = make_keys_from_slcdir(slc_dir, ending)
 
     # start final dictionary
     d = {k:None for k in keys}

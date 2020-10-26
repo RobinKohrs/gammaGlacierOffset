@@ -111,7 +111,7 @@ print()
 # check if structure not already exists
 #seasons = ["../data/summer", "../data/winter"]
 # mode
-modes = ["intensity", "phase"]
+modes = ["intensity", "fringe"]
 
 # create subdirectory for all files that come in tuples
 tuple_dir = "../data/tuples"; os.makedirs(tuple_dir) if not os.path.isdir(tuple_dir) else print(".....")

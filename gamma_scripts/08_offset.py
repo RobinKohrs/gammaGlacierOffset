@@ -13,7 +13,8 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 import itertools
-from functions import get_files, get_dates, file_dict
+
+from functions import *
 
 ##################
 # parse option to work locally or on server
@@ -32,7 +33,6 @@ parser.add_argument("-s", "--step", dest="steps",
 
 # 1 = Intensity tracking
 # 2 = Fringe visibility tracking
-# TODO: tracking method in output file names
 parser.add_argument("-a", "--algorithm", dest="trackingAlgorithm",
                     help="(Input) Intensity Tracking (1) or Fringe Visibility Tracking (2)",
                     default=1, type=int)
@@ -45,6 +45,13 @@ parser.add_argument("-i", "--iters", dest="i",
 global args
 args = parser.parse_args()
 
+algo = args.trackingAlgorithm
+
+if algo == 1:
+    method = "intensity"
+elif algo == 2:
+    method = "fringe"
+print(method)
 
 if not args.m == "s":
     print("working locally...")
@@ -81,13 +88,15 @@ def initiate_offsets(slc1_par, slc2_par, off):
 
     print("=====")
     print("Creating offset file from SLC parameter file")
+    print(TGREEN + method + ENDC)
     print("=====\n")
+
     sysinput = sys.stdin # save std input
     f = StringIO(override_input) # override input 7x
     sys.stdin = f
     print(sys.stdin)
 
-    pg.create_offset(slc1_par, slc2_par, off, args.trackingAlgorithm)
+    pg.create_offset(slc1_par, slc2_par, off, algo)
 
     f.close()
     sys.stdin = sysinput # bring std input back
@@ -150,6 +159,7 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
     # optimisation_dict = {iter : [rank, sizes, patches]}
     optimisation = {}
 
+    # print number of prospected optimisation iterations
     runs = len(list(itertools.product(*[patches, samples, thresholds])))
     print("Number of runs:", runs)
 
@@ -318,7 +328,7 @@ def displacements(offset, ccp, slc1_par, off, disp,
     pg.offset_tracking(offset, ccp, slc1_par, off, disp, "-",
                        mode, thresh, "-")
     # TODO: converting real, imaginary and magnitude to raster maps:
-    # where to get width from? from mli.par of reference slc...
+    # use awkpy from functions
     width = 2800
 
     pg.cpx_to_real(disp, disp_real, width, 0)
@@ -330,48 +340,71 @@ def displacements(offset, ccp, slc1_par, off, disp,
 
 def main():
 
+    # TODO: phase tracking integration
+    # TODO: Add -p argument for every step
+    # TODO: Get width of MLI
+    # TODO: Width of output displacement map?
+
+    # Folder Structure:
+    #     | DEM
+    #     | SLC
+    #     | tuples
+    #         | date1_date2
+    #              | intensity
+    #              | phase
+    #         | date3_date4
+    #              | intensity
+    #              | phase
+    #
+    # writing to offset files to /tuples/date1_date2/intensity (-a 1 -> Intensity Tracking),
+    #                            /tuples/date1_date2/phase (-a 2 -> Fringe Visibility Tracking)
+
     # INPUT
-    slc_dir =  "../data/test_offset/perf"
+    slc_dir = "../data/test_offset/perf"
+    tuples_dir = "../data/tuples"
+
+    # Intensity or Phase tracking?
+
 
     oversampling = 1  # what does that actually mean?
 
-    # optional overview printing
-    files = get_files(slc_dir = slc_dir, image = "m", file_ending=".slc.par")
-    # print(files)
-    dates = get_dates(slc_dir = slc_dir)
-    # print(dates)
-
-    # create file dict:
-    dict = file_dict(slc_dir = slc_dir)
+    # specify ending of file to be used as basename giver
+    dict = file_dict(slc_dir = slc_dir, ending=".mosaic_slc")
     print(dict)
-
-    dict = {'20200911_20200923': {'20200911': ['20200911_vv_iw2.slc', '20200911_vv_iw2.slc.par'], '20200923': ['20200923_vv_iw2.slc.par', '20200923_vv_iw2.slc']}}
+    # dict = {'20200911_20200923': {'20200911': ['20200911_vv_iw2.slc', '20200911_vv_iw2.slc.par'], '20200923': ['20200923_vv_iw2.slc.par', '20200923_vv_iw2.slc']}}
 
     for datepair in dict:
-        QA = os.path.join(slc_dir, datepair + ".QA")
-        off = os.path.join(slc_dir, datepair + ".off")
-        reg = os.path.join(slc_dir, datepair + ".reg")
-        qmf = os.path.join(slc_dir, datepair + ".qmf")
-        offset = os.path.join(slc_dir, datepair + ".offset")
-        ccp = os.path.join(slc_dir, datepair + ".ccp") # cross-correlation for each patch
-        disp = os.path.join(slc_dir, datepair + ".disp")
-        disp_real = os.path.join(slc_dir, datepair + ".disp_real")
-        disp_imag = os.path.join(slc_dir, datepair + ".disp_imag")
-        disp_ints = os.path.join(slc_dir, datepair + ".disp_ints")
-        out = os.path.join(slc_dir, datepair + ".temp_displacement_map.tif")
+        # concat path
+        path = os.path.join(tuples_dir, datepair, method, datepair)
 
+        # naming files
+        QA = os.path.join(path + ".QA")
+        off = os.path.join(path + ".off")
+        reg = os.path.join(path + ".reg")
+        qmf = os.path.join(path + ".qmf")
+        offset = os.path.join(path + ".offset")
+        ccp = os.path.join(path + ".ccp") # cross-correlation for each patch
+        disp = os.path.join(path + ".disp")
+        disp_real = os.path.join(path + ".disp_real")
+        disp_imag = os.path.join(path + ".disp_imag")
+        disp_ints = os.path.join(path + ".disp_ints")
+        out = os.path.join(path + ".temp_displacement_map.tif")
+
+        # fetching SLCs
         for i, slc_files in enumerate(dict[datepair].values()):
-            # print(a)
             if i == 0:
-                # main_slc = os.path.join(slc_dir, slc_files.endswith(".slc"))
-                slc1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".slc"))][0]
-                slc1_par = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".slc.par"))][0]
-                print(slc1)
+                # fetching main
+                slc1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc"))][0]
+                slc1_par = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc.par"))][0]
+                mli1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mli"))][0]
+                print("Main SLC:", slc1)
             elif i == 1:
-                slc2 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".slc"))][0]
-                slc2_par = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".slc.par"))][0]
-                print(slc2)
+                # fetching secondary
+                slc2 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc"))][0]
+                slc2_par = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc.par"))][0]
+                print("Secondary SLC:", slc2)
 
+        # looping through steps indicated by input -s, adding possible -> e.g. `-s 1 2 3 4 5`
         for step in sorted(args.steps):
             if int(step) == 1:
                 # delete .off file if existing, initiate .off file with orbit inforamtion
@@ -380,9 +413,10 @@ def main():
                 # Optimise parameters patch size, sample number and threshold
                 optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
             elif int(step) == 3:
-                #
+                # Fitting .off file with best result from optimisation procedure
                 final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
             elif int(step) == 4:
+                # Offset Tracking algorithm
                 tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling)
             elif int(step) == 5:
                 displacements(offset, ccp, slc1_par, off, disp,
@@ -390,6 +424,7 @@ def main():
                               out)
             else:
                 pass
+        break
 
 if __name__ == '__main__':
     main()
