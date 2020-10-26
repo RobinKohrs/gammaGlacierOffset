@@ -39,4 +39,6 @@ relevant sind und so in den überordner date1_date2 gelegt werden können
 Cartus: 
 
 Init_offset_orbit bei auch koregistrierte SLCs?
+
+Oversampling = 1 - what does it mean?
         

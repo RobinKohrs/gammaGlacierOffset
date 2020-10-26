@@ -41,6 +41,8 @@ parser.add_argument("-i", "--iters", dest="i",
                     help="(input) is number of iterations performed as optimisation of the offset [int]",
                     default=3, type=int)
 
+parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
+
 # get the arguments
 global args
 args = parser.parse_args()
@@ -51,7 +53,6 @@ if algo == 1:
     method = "intensity"
 elif algo == 2:
     method = "fringe"
-print(method)
 
 if not args.m == "s":
     print("working locally...")
@@ -96,16 +97,23 @@ def initiate_offsets(slc1_par, slc2_par, off):
     sys.stdin = f
     print(sys.stdin)
 
-    pg.create_offset(slc1_par, slc2_par, off, algo)
+    cmd1 = f"create_offset {slc1_par} {slc2_par} {off} {algo}"
+
+    pg.create_offset(slc1_par, slc2_par, off, algo) if not args.print else print(cmd1)
 
     f.close()
     sys.stdin = sysinput # bring std input back
 
     print("=====")
     print("Initiating offsets with precise Sentinel-1 orbit information")
+    print(TGREEN + "Orbit Reference Position" + ENDC)
+    print("Range:", r_pos)
+    print("Azimuth:", az_pos)
     print("=====\n")
 
-    pg.init_offset_orbit(slc1_par, slc2_par, off, r_pos, az_pos)
+    cmd2 = f"init_offset_orbit {slc1_par} {slc2_par} {off} {r_pos} {az_pos}"
+
+    pg.init_offset_orbit(slc1_par, slc2_par, off, r_pos, az_pos) if not args.print else print(cmd2)
 
     print(f"Full initiation successful. \nOffset file: {off}.")
 
@@ -127,13 +135,13 @@ def reading_QA(QA):
     try:
         sd_metric = re.findall("\d.\d*", statement)
     except:
-        print("QA_temp console output document not readable")
+        print(TRED + "QA_temp console output document not readable" + ENDC)
 
     dict = {"range" : sd_metric[0],
             "azimuth" : sd_metric[1]}
     return (dict)
 
-def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
+def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling, snr):
 
     # delete QA file
     if os.path.isfile(QA):
@@ -221,9 +229,30 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
                     print("=====")
 
                     # GAMMA
-                    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
-                              patch, patch, "-", oversampling, sample, sample,
-                              thresh, "-", "-", deramping)
+                    if algo == 1:
+                        cmd = f"offset_pwr {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {qmf} {patch} {patch} " \
+                              f"- {oversampling} {sample} {sample} {thresh} - - {deramping}"
+
+                        if not args.print:
+                            pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
+                                  patch, patch, "-", oversampling, sample, sample,
+                                  thresh, "-", "-", deramping)
+                        else:
+                            print(cmd)
+                            exit()
+
+                    elif algo == 2:
+                        cmd = f"offset_SLC {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {snr} {patch} {patch} " \
+                              f"- {oversampling} {sample} {sample} {thresh}"
+
+                        if not args.print:
+                            pg.offset_SLC(slc1, slc2, slc1_par, slc2_par, off, reg, snr,
+                                      patch, patch, "-", oversampling,
+                                      sample, sample, thresh, "-")
+                        else:
+                            print(cmd)
+                            exit()
+
 
                     # store reference stdout
                     old_stdout = sys.stdout
@@ -301,8 +330,8 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling):
 
     az_start = "-" # 4000
     az_end = "-"
-    r_start = "-" # 13000
-    r_end = "-"
+    r_start = "-"
+    r_end = "-" # 13000
 
     int_filter = 1
     pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off, # INPUT
@@ -340,10 +369,18 @@ def displacements(offset, ccp, slc1_par, off, disp,
 
 def main():
 
+    print("\n")
+    print("=====")
+    print(TYEL + "Processing with method:" + ENDC)
+    print(TYEL + method + ENDC)
+    print("=====")
+    print("\n")
+
     # TODO: phase tracking integration
     # TODO: Add -p argument for every step
     # TODO: Get width of MLI
     # TODO: Width of output displacement map?
+    # TODO: Init_offset_orbit bei auch koregistrierte SLCs?
 
     # Folder Structure:
     #     | DEM
@@ -359,14 +396,14 @@ def main():
     # writing to offset files to /tuples/date1_date2/intensity (-a 1 -> Intensity Tracking),
     #                            /tuples/date1_date2/phase (-a 2 -> Fringe Visibility Tracking)
 
-    # INPUT
+    # USER INPUT #######################
+
     slc_dir = "../data/test_offset/perf"
     tuples_dir = "../data/tuples"
-
-    # Intensity or Phase tracking?
-
-
     oversampling = 1  # what does that actually mean?
+
+    # USER INPUT end ###################
+
 
     # specify ending of file to be used as basename giver
     dict = file_dict(slc_dir = slc_dir, ending=".mosaic_slc")
@@ -382,6 +419,7 @@ def main():
         off = os.path.join(path + ".off")
         reg = os.path.join(path + ".reg")
         qmf = os.path.join(path + ".qmf")
+        snr = os.path.join(path + ".snr")
         offset = os.path.join(path + ".offset")
         ccp = os.path.join(path + ".ccp") # cross-correlation for each patch
         disp = os.path.join(path + ".disp")
@@ -396,7 +434,7 @@ def main():
                 # fetching main
                 slc1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc"))][0]
                 slc1_par = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc.par"))][0]
-                mli1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mli"))][0]
+                # mli1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic.mli"))][0]
                 print("Main SLC:", slc1)
             elif i == 1:
                 # fetching secondary
@@ -411,7 +449,7 @@ def main():
                 initiate_offsets(slc1_par, slc2_par, off)
             elif int(step) == 2:
                 # Optimise parameters patch size, sample number and threshold
-                optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
+                optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling, snr)
             elif int(step) == 3:
                 # Fitting .off file with best result from optimisation procedure
                 final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)

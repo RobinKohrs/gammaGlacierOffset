@@ -47,7 +47,6 @@ def make_keys_from_slcdir(slc_dir, ending=".slc"):
     dates = [x for x in get_dates(slc_dir, ending)]
 
     dates_keys = []
-    print(dates)
     for d in dates:
         year1 = int(d[0:4])
         month1 = int(d[4:6])

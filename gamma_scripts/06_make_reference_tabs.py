@@ -53,7 +53,7 @@ def geocode():
 
 def reference_tabs():
 
-    # find all the main - secondary pairs
+    # find all the main - secondary pairsw
     secondary_dates = [x[0][:15] for x in get_files(slc_dir, image="s")]
     for i in secondary_dates:
         identifier = os.path.join(slc_dir, i) # yyyymmdd_vv_iw2
