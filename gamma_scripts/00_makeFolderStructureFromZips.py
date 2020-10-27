@@ -104,12 +104,6 @@ print()
 print("There are {} pairs".format(len(comb_dates_all)))
 print()
 
-#####################################################
-# Create Directories
-# TODO: Agree on Structure
-
-# check if structure not already exists
-#seasons = ["../data/summer", "../data/winter"]
 # mode
 modes = ["intensity", "fringe"]
 
@@ -130,34 +124,6 @@ for d in comb_dates_all:
             print("-----------------------------")
             os.makedirs(dirs)
 
-# for m in modes:
-#     print(m)
-#     if not os.path.isdir(m):
-#             if m == "./phase":
-#                 print("==============================")
-#                 print("Creating Phase directories: ")
-#                 print("==============================")
-#                 for d in comb_dates_all:
-#                     dirs = os.path.join(m, d)
-#                     print(dirs)
-#                     if args.c == 1:
-#                         os.makedirs(dirs)
-#                     else:
-#                         pass
-#             else:
-#                 print("==============================")
-#                 print("Creating Intensity directories: ")
-#                 print("==============================")
-#                 for d in comb_dates_all:
-#                     dirs = os.path.join(m, d)
-#                     print(dirs)
-#                     if args.c == 1:
-#                         os.makedirs(dirs)
-#                     else:
-#                         pass
-
-    else:
-        print("Folder structure already exists")
 
 ###########################
 # Create directories for DEM and SLCs
