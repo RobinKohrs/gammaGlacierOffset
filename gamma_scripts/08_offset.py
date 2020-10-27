@@ -21,11 +21,8 @@ from functions import *
 ##################
 
 # parse some arguments
-parser = argparse.ArgumentParser(description="Decide whether you are executing this locally (-l) or on the server (-s) and which steps to perform")
+parser = argparse.ArgumentParser(description="Glacier Offset Tracking in 5 steps")
 # get positional arguments
-parser.add_argument("-m", "--machine", dest="m",
-                    help="(input) decide if working locally (l) or on the server (s)", default="s", type=str)
-
 parser.add_argument("-s", "--step", dest="steps",
                     help="(input) initiate offset file with parameter file and orbit information (1),"
                          "optimise offsets (2)", default=[1],
@@ -54,7 +51,7 @@ if algo == 1:
 elif algo == 2:
     method = "fringe"
 
-if not args.m == "s":
+if args.print == True:
     print("working locally...")
 else:
     try:
@@ -239,7 +236,7 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
                                   thresh, "-", "-", deramping)
                         else:
                             print(cmd)
-                            exit()
+                            return None
 
                     elif algo == 2:
                         cmd = f"offset_SLC {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {snr} {patch} {patch} " \
@@ -251,7 +248,7 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
                                       sample, sample, thresh, "-")
                         else:
                             print(cmd)
-                            exit()
+                            return None
 
 
                     # store reference stdout
@@ -376,7 +373,7 @@ def main():
     print("=====")
     print("\n")
 
-    # TODO: phase tracking integration
+    # TODO: phase tracking integration (mainly step 2!!) -> Read QA file from offset_fit properly
     # TODO: Add -p argument for every step
     # TODO: Get width of MLI
     # TODO: Width of output displacement map?
@@ -397,17 +394,13 @@ def main():
     #                            /tuples/date1_date2/phase (-a 2 -> Fringe Visibility Tracking)
 
     # USER INPUT #######################
-
-    slc_dir = "../data/test_offset/perf"
+    slc_dir = "../data/SLC"
     tuples_dir = "../data/tuples"
     oversampling = 1  # what does that actually mean?
 
-    # USER INPUT end ###################
-
-
     # specify ending of file to be used as basename giver
     dict = file_dict(slc_dir = slc_dir, ending=".mosaic_slc")
-    print(dict)
+    # print(dict)
     # dict = {'20200911_20200923': {'20200911': ['20200911_vv_iw2.slc', '20200911_vv_iw2.slc.par'], '20200923': ['20200923_vv_iw2.slc.par', '20200923_vv_iw2.slc']}}
 
     for datepair in dict:
@@ -462,7 +455,6 @@ def main():
                               out)
             else:
                 pass
-        break
 
 if __name__ == '__main__':
     main()
