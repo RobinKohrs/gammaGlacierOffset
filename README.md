@@ -31,7 +31,7 @@ main script-directory)
 
 ``` 
 
-![interferogram](plots/26102020/Screenshot from 2020-10-26 16-44-41.png)
+![interferogram](./plots/26102020/galcierInterferogram.png)
 
 Authors: Robin Kohrs, Konstantin Schellenberg
 
