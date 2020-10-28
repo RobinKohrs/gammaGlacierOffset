@@ -43,14 +43,6 @@ for d in dates:
     else:
         summer.append(d)
 
-# print("Winter Dates")
-# [print(i) for i in summer]
-# print(" ")
-# print("Summer Dates")
-# [print(i) for i in winter]
-
-
-
 # for every date in the summer
 date_combs_summer = []
 for d in summer:
@@ -122,7 +114,7 @@ for d in comb_dates_all:
             print("-----------------------------")
             print("Creating Tuple Directory: {}".format(dirs))
             print("-----------------------------")
-            os.makedirs(dirs)
+            os.makedirs(dirs, exist_ok=True)
 
 
 ###########################
@@ -134,8 +126,8 @@ for dir in aux_dirs:
         print("==========")
         print("Creating Directory \n {}".format(dir))
         print("==========")
-        if args.c == 1:
-            os.makedirs(dir)
+        if args.print:
+            os.makedirs(dir, exist_ok=True)
         else:
             pass
 
