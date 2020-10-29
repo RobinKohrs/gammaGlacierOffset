@@ -1,0 +1,123 @@
+*** Offset estimation between SLC images using intensity cross-correlation ***
+*** Copyright 2019, Gamma Remote Sensing, v5.7 clw/cm 17-Jul-2019 ***
+OPENMP: number of physically available processors: 48
+OPENMP: max. number of threads (program defined): 6
+OPENMP: max. number of available threads, (environment variable OMP_NUM_THREADS): 48
+OPENMP: number of threads that will be used: 6
+offset_pwr compiled with GCC version: 4.8.5
+SLC-1 image: ../data/SLC/20160827_vv_iw2.mosaic_slc
+SLC-2 image: ../data/SLC/20160908_vv_iw2.mosaic_slc
+SLC-1 ISP image parameter file: ../data/SLC/20160827_vv_iw2.mosaic_slc.par
+SLC-2 ISP image parameter file: ../data/SLC/20160908_vv_iw2.mosaic_slc.par
+ISP interferogram/offset parameter file: ../data/tuples/20160827_20160908/20160827_20160908.off
+default cross-correlation coherence threshold for acceptance of offsets: 0.100
+cross-correlation offset measurements: ../data/tuples/20160827_20160908/20160827_20160908.reg
+cross-correlation peak data file: ../data/tuples/20160827_20160908/20160827_20160908.qmf
+SLC format: FCOMPLEX (pairs of 4-byte float (re,im))
+SLC oversampling factor: 1
+number of range offset locations: 25
+number of azimuth offset locations: 25
+starting range offset sample: 168  ending range sample: 24999
+starting azimuth line: 136  ending line: 12295
+range offset measurement spacing: 1031
+azimuth sample spacing (lines): 503
+Lanczos interpolation coefficients order: 5  steps: 32768
+Bandwidth fraction: 1.000000
+
+initial offset estimate (range, azimuth): 0  0
+SLC offset search window sizes (range, azimuth pixels): 128  128
+over-sampled SLC window sizes (range, azimuth pixels): 128  128
+rstart,  rstep,  nr:      168   1031     25
+azstart, azstep, naz:     136    503     25
+number of offset estimates:     625
+correlation function window size range: 32  azimuth: 32
+cross-correlation coherence threshold for acceptance of offset:      0.100
+plot flag: 0
+interp. filter bandwidth:      0.800
+average SLC-1 intensity: 5.55355e-02  clip1: 10.000  scale: 4.24341e+00
+average SLC-2 intensity: 9.13816e-02  clip2: 10.000  scale: 3.30804e+00
+
+search line:     0   SLC-1:    136   SLC-2:    136  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     1   SLC-1:    639   SLC-2:    639  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     2   SLC-1:   1142   SLC-2:   1142  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     3   SLC-1:   1645   SLC-2:   1645  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     4   SLC-1:   2148   SLC-2:   2148  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     5   SLC-1:   2651   SLC-2:   2651  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     6   SLC-1:   3154   SLC-2:   3154  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     7   SLC-1:   3657   SLC-2:   3657  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     8   SLC-1:   4160   SLC-2:   4160  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      0  out of:     25
+
+search line:     9   SLC-1:   4663   SLC-2:   4663  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:      7  out of:     25
+
+search line:    10   SLC-1:   5166   SLC-2:   5166  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     17  out of:     25
+
+search line:    11   SLC-1:   5669   SLC-2:   5669  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     20  out of:     25
+
+search line:    12   SLC-1:   6172   SLC-2:   6172  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+
+search line:    13   SLC-1:   6675   SLC-2:   6675  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     20  out of:     25
+
+search line:    14   SLC-1:   7178   SLC-2:   7178  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     21  out of:     25
+
+search line:    15   SLC-1:   7681   SLC-2:   7681  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     21  out of:     25
+
+search line:    16   SLC-1:   8184   SLC-2:   8184  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+
+search line:    17   SLC-1:   8687   SLC-2:   8687  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+
+search line:    18   SLC-1:   9190   SLC-2:   9190  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+
+search line:    19   SLC-1:   9693   SLC-2:   9693  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+
+search line:    20   SLC-1:  10196   SLC-2:  10196  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+
+search line:    21   SLC-1:  10699   SLC-2:  10699  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+
+search line:    22   SLC-1:  11202   SLC-2:  11202  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     22  out of:     25
+
+search line:    23   SLC-1:  11705   SLC-2:  11705  azoff_init: 0  roff_init: 0  pflg: 0
+offset estimates accepted:     23  out of:     25
+offset estimates accepted:      0  out of:     25
+
+number of offsets above correlation coefficient threshold: 312 of 625
+output binary offset file: ../data/tuples/20160827_20160908/20160827_20160908.reg
+output binary cross-correlation peak data (ccp) file: ../data/tuples/20160827_20160908/20160827_20160908.qmf
+number of offsets range : 25   azimuth: 25
+SLC offset search window size range: 128  azimuth: 128
+writing ISP OFF_par file: ../data/tuples/20160827_20160908/20160827_20160908.off
+
+user time (s):        33.920
+system time (s):       4.090
+elapsed time (s):     38.010
+
