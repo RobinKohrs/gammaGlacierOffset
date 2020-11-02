@@ -95,7 +95,7 @@ def initiate_offsets(slc1_par, slc2_par, off):
     sys.stdin = f
     print(sys.stdin)
 
-    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} 1}"
+    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} 1"
 
     pg.create_offset(slc1_par, slc2_par, off, "1") if not args.print else print(cmd1)
 
