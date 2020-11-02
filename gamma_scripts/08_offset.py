@@ -445,6 +445,7 @@ def main():
                 optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling, snr)
             elif int(step) == 3:
                 # Fitting .off file with best result from optimisation procedure
+                # For the intensity it takes the input from the QA file
                 final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
             elif int(step) == 4:
                 # Offset Tracking algorithm
