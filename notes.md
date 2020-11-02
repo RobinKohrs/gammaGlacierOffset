@@ -87,6 +87,13 @@ for each pair
 
 - ScanSAR_coreg.py
 
+- **WENN MAN EINE WDIR ANGIBT**
+- Rslcs im Current directory sind nicht die finalen rscls die wir verwenden wollen. Sie sind nicht mosaiikiert.
+- Die relevanten datein befinden sich in dem Order, den man unter `wdir` angibt. Und hier verwendet man für die 
+weitere Prozessierung beide `.rslc`-Dateien
+- Die beiden `rslc` sind koregistriert. Das dritte SLC in diesem Ordner ist der mosaikierte, aber nicht koregistrierte Secondary Image
+- Bei der Koregistrierung fliegen Bereiche mit sehr niedriger Koheränz raus
+
 ```python
 for each pair
     # create tab-file for each referenced slave
@@ -95,9 +102,6 @@ for each pair
     
 ```
 
-```python
-
-```
 
 ***
 
