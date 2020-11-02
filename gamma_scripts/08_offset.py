@@ -94,7 +94,7 @@ def initiate_offsets(slc1_par, slc2_par, off):
     sys.stdin = f
     print(sys.stdin)
 
-    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} {algo}"
+    cmd1 = f"create_offset {slc1_par} {slc2_par} {off} {algo}"
 
     pg.create_offset(slc1_par, slc2_par, off, algo) if not args.print else print(cmd1)
 
@@ -400,62 +400,62 @@ def main():
 
     # specify ending of file to be used as basename giver
     dict = file_dict(slc_dir = slc_dir, ending=".mosaic_slc")
-
     # print(dict)
     # dict = {'20200911_20200923': {'20200911': ['20200911_vv_iw2.slc', '20200911_vv_iw2.slc.par'], '20200923': ['20200923_vv_iw2.slc.par', '20200923_vv_iw2.slc']}}
 
     for datepair in dict:
-        date1 = datepair[0:8]
-        date2 = datepair[9:17]
-
-        print(date2)
         # concat path
-        main_path = os.path.join(tuples_dir, datepair)
-        path_datepair = os.path.join(tuples_dir, datepair, method)
+        path = os.path.join(tuples_dir, datepair, method, datepair)
 
-        QA = os.path.join(path_datepair, datepair + ".QA")
-        off = os.path.join(path_datepair, datepair + ".off")
-        reg = os.path.join(path_datepair, datepair + ".reg")
-        qmf = os.path.join(path_datepair, datepair + ".qmf")
-        snr = os.path.join(path_datepair, datepair + ".snr")
-        offset = os.path.join(path_datepair, datepair + ".offset")
-        ccp = os.path.join(path_datepair, datepair + ".ccp") # cross-correlation for each patch
-        disp = os.path.join(path_datepair, datepair + ".disp")
-        disp_real = os.path.join(path_datepair, datepair + ".disp_real")
-        disp_imag = os.path.join(path_datepair, datepair + ".disp_imag")
-        disp_ints = os.path.join(path_datepair, datepair + ".disp_ints")
-        out = os.path.join(path_datepair, datepair + ".temp_displacement_map.tif")
+        # naming files
+        QA = os.path.join(path + ".QA")
+        off = os.path.join(path + ".off")
+        reg = os.path.join(path + ".reg")
+        qmf = os.path.join(path + ".qmf")
+        snr = os.path.join(path + ".snr")
+        offset = os.path.join(path + ".offset")
+        ccp = os.path.join(path + ".ccp") # cross-correlation for each patch
+        disp = os.path.join(path + ".disp")
+        disp_real = os.path.join(path + ".disp_real")
+        disp_imag = os.path.join(path + ".disp_imag")
+        disp_ints = os.path.join(path + ".disp_ints")
+        out = os.path.join(path + ".temp_displacement_map.tif")
 
         # fetching SLCs
-        # fetching main
-        rslcs = [rslc for rslc in os.listdir(main_path) if rslc.endswith(".rslc")]
-        rslcs_par = [rslc for rslc in os.listdir(main_path) if rslc.endswith(".rslc.par")]
-        rslc1 = [os.path.join(main_path, x) for x in rslcs if date1 in x][0]
-        rslc2 = [os.path.join(main_path, x) for x in rslcs if date2 in x][0]
-        rslc1_par = [os.path.join(main_path, x) for x in rslcs_par if date1 in x][0]
-        rslc2_par = [os.path.join(main_path, x) for x in rslcs_par if date2 in x][0]
+        for i, slc_files in enumerate(dict[datepair].values()):
+            if i == 0:
+                # fetching main
+                slc1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc"))][0]
+                slc1_par = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc.par"))][0]
+                # mli1 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic.mli"))][0]
+                print("Main SLC:", slc1)
+            elif i == 1:
+                # fetching secondary
+                slc2 = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc"))][0]
+                slc2_par = [os.path.join(slc_dir, slc) for slc in slc_files if slc.endswith((".mosaic_slc.par"))][0]
+                print("Secondary SLC:", slc2)
 
         # looping through steps indicated by input -s, adding possible -> e.g. `-s 1 2 3 4 5`
         for step in sorted(args.steps):
             if int(step) == 1:
                 # delete .off file if existing, initiate .off file with orbit inforamtion
-                initiate_offsets(rslc1_par, rslc2_par, off)
+                initiate_offsets(slc1_par, slc2_par, off)
             elif int(step) == 2:
                 # Optimise parameters patch size, sample number and threshold
-                optimise_offsets(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA, oversampling, snr)
+                optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling, snr)
             elif int(step) == 3:
                 # Fitting .off file with best result from optimisation procedure
-                final_fit_offsets(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA, oversampling)
+                # For the intensity it takes the input from the QA file
+                final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling)
             elif int(step) == 4:
                 # Offset Tracking algorithm
-                tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, oversampling)
+                tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling)
             elif int(step) == 5:
-                displacements(offset, ccp, rslc1_par, off, disp,
+                displacements(offset, ccp, slc1_par, off, disp,
                               disp_real, disp_imag, disp_ints,
                               out)
             else:
                 pass
-        break
 
 if __name__ == '__main__':
     main()
