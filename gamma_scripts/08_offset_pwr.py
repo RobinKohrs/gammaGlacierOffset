@@ -30,9 +30,9 @@ parser.add_argument("-s", "--step", dest="steps",
 
 # 1 = Intensity tracking
 # 2 = Fringe visibility tracking
-parser.add_argument("-a", "--algorithm", dest="trackingAlgorithm",
-                    help="(Input) Intensity Tracking (1) or Fringe Visibility Tracking (2)",
-                    default=1, type=int)
+# parser.add_argument("-a", "--algorithm", dest="trackingAlgorithm",
+#                     help="(Input) Intensity Tracking (1) or Fringe Visibility Tracking (2)",
+#                     default=1, type=int)
 
 parser.add_argument("-i", "--iters", dest="i",
                     help="(input) is number of iterations performed as optimisation of the offset [int]",
@@ -44,12 +44,12 @@ parser.add_argument("-p", "--print", dest="print", help="only print cmd call", a
 global args
 args = parser.parse_args()
 
-algo = args.trackingAlgorithm
-
-if algo == 1:
-    method = "intensity"
-elif algo == 2:
-    method = "fringe"
+# algo = args.trackingAlgorithm
+#
+# if algo == 1:
+#     method = "intensity"
+# elif algo == 2:
+#     method = "fringe"
 
 if args.print == True:
     print("working locally...")
@@ -68,6 +68,7 @@ else:
 #########################################
 
 deramping = 1 # yes
+method = "intensity"
 
 #########################################
 # CREATING OFFSETS (actually belongs to another script
@@ -94,9 +95,9 @@ def initiate_offsets(slc1_par, slc2_par, off):
     sys.stdin = f
     print(sys.stdin)
 
-    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} {algo}"
+    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} 1}"
 
-    pg.create_offset(slc1_par, slc2_par, off, algo) if not args.print else print(cmd1)
+    pg.create_offset(slc1_par, slc2_par, off, "1") if not args.print else print(cmd1)
 
     f.close()
     sys.stdin = sysinput # bring std input back
@@ -153,19 +154,20 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
     patches = [2 ** x for x in range(7, 11)]
 
     # Number of offset estimates, correlation function window size <- to be optimised
-    samples = [x ** 2 for x in range(5, 8)]
+    samples = [x ** 2 for x in range(8, 12)]
 
     threshold = 0.15  # from user guide
-    thresholds = np.arange(0.1, 0.3, 0.05).tolist()
-    # round iterative
-    for i in enumerate(thresholds):
-        thresholds[i[0]] = round(i[1], 2)
+    # thresholds = np.arange(0.1, 0.3, 0.05).tolist()
+
+    # round iteratively
+    # for i in enumerate(thresholds):
+    #     thresholds[i[0]] = round(i[1], 2)
 
     # optimisation_dict = {iter : [rank, sizes, patches]}
     optimisation = {}
 
     # print number of prospected optimisation iterations
-    runs = len(list(itertools.product(*[patches, samples, thresholds])))
+    runs = len(list(itertools.product(*[patches, samples])))
     print("Number of runs:", runs)
 
     def dataframe_creation(optimisation):
@@ -209,82 +211,76 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
 
         return df
 
-    # TODO: ask Robin: loops more sanitised!?
-    # TODO: implement fringe visibility
     def looping(maxiter):
 
         count = 0
         for i, patch in enumerate(patches):
             for j, sample in enumerate(samples):
-                for k, thresh in enumerate(thresholds):
-                    print(k)
 
-                    print("Offset Optimisation for 'window size', 'samples per window' and 'threshold'")
-                    print("Number Patches: {}".format(patch))
-                    print("Number Samples: {}".format(sample))
-                    print("Threshold is {}".format(thresh))
-                    print("=====")
+                print("Offset Optimisation for 'window size', 'samples per window' and 'threshold'")
+                print("Number Patches: {}".format(patch))
+                print("Number Samples: {}".format(sample))
+                print("Threshold is {}".format(threshold))
+                print("=====")
 
-                    # GAMMA
-                    if algo == 1:
-                        cmd = f"offset_pwr {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {qmf} {patch} {patch} " \
-                              f"- {oversampling} {sample} {sample} {thresh} - - {deramping}"
+                cmd = f"offset_pwr {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {qmf} {patch} {patch} " \
+                      f"- {oversampling} {sample} {sample} {threshold} - - {deramping}"
 
-                        if not args.print:
-                            pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
-                                  patch, patch, "-", oversampling, sample, sample,
-                                  thresh, "-", "-", deramping)
-                        else:
-                            print(cmd)
-                            return None
+                if not args.print:
+                    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
+                          patch, patch, "-", oversampling, sample, sample,
+                          threshold, "-", "-", deramping)
+                else:
+                    print(cmd)
+                    return None
 
-                    elif algo == 2:
-                        cmd = f"offset_SLC {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {snr} {patch} {patch} " \
-                              f"- {oversampling} {sample} {sample} {thresh}"
-
-                        if not args.print:
-                            pg.offset_SLC(slc1, slc2, slc1_par, slc2_par, off, reg, snr,
-                                      patch, patch, "-", oversampling,
-                                      sample, sample, thresh, "-")
-                        else:
-                            print(cmd)
-                            return None
+                # elif algo == 2:
+                #     cmd = f"offset_SLC {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {snr} {patch} {patch} " \
+                #           f"- {oversampling} {sample} {sample} {threshold}"
+                #
+                #     if not args.print:
+                #         pg.offset_SLC(slc1, slc2, slc1_par, slc2_par, off, reg, snr,
+                #                   patch, patch, "-", oversampling,
+                #                   sample, sample, threshold, "-")
+                #     else:
+                #         print(cmd)
+                #         return None
 
 
-                    # store reference stdout
-                    old_stdout = sys.stdout
-                    result = StringIO()
-                    sys.stdout = result
+                # store reference stdout
+                old_stdout = sys.stdout
+                result = StringIO()
+                sys.stdout = result
 
-                    # offset fitting
-                    print("=====")
-                    print("Offset fitting")
-                    print("=====")
+                # offset fitting
+                print("=====")
+                print("Offset fitting")
+                print("=====")
 
-                    # GAMMA
-                    pg.offset_fit(reg, qmf, off, "-", "-")
+                # GAMMA
+                pg.offset_fit(reg, qmf, off, "-", "-")
 
-                    # Redirect stdout back to screen
-                    sys.stdout = old_stdout
+                # Redirect stdout back to screen
+                sys.stdout = old_stdout
 
-                    # return value from stdout to file
+                # return value from stdout to file
 
-                    out = result.getvalue()
-                    qa_read = reading_QA(out)
-                    # print("Metrics:", qa_read)
+                out = result.getvalue()
+                qa_read = reading_QA(out)
+                # print("Metrics:", qa_read)
 
-                    # update optimisation dictionary
-                    optimisation[count] = [patch, sample, thresh, {"metrics" : qa_read}]
-                    print(optimisation)
+                # update optimisation dictionary
+                optimisation[count] = [patch, sample, threshold, {"metrics" : qa_read}]
+                print(optimisation)
 
-                    # optimisation = {0: [64, 25, 0.1, {'metrics': {'range': '0.1583', 'azimuth': '0.1380'}}], 1: [64, 25, 0.15, {'metrics': {'range': '0.0675', 'azimuth': '0.0995'}}], 2: [64, 25, 0.2, {'metrics': {'range': '0.0679', 'azimuth': '0.1005'}}], 3: [64, 25, 0.25, {'metrics': {'range': '0.0583', 'azimuth': '0.1042'}}], 4: [64, 25, 0.3, {'metrics': {'range': '0.0622', 'azimuth': '0.1122'}}], 5: [64, 36, 0.1, {'metrics': {'range': '0.0740', 'azimuth': '0.1039'}}], 6: [64, 36, 0.15, {'metrics': {'range': '0.0729', 'azimuth': '0.1037'}}], 7: [64, 36, 0.2, {'metrics': {'range': '0.0660', 'azimuth': '0.0929'}}], 8: [64, 36, 0.25, {'metrics': {'range': '0.0579', 'azimuth': '0.0702'}}], 9: [64, 36, 0.3, {'metrics': {'range': '0.0560', 'azimuth': '0.0721'}}], 10: [64, 49, 0.1, {'metrics': {'range': '0.0742', 'azimuth': '0.1511'}}], 11: [64, 49, 0.15, {'metrics': {'range': '0.0739', 'azimuth': '0.1422'}}], 12: [64, 49, 0.2, {'metrics': {'range': '0.0652', 'azimuth': '0.1422'}}], 13: [64, 49, 0.25, {'metrics': {'range': '0.0584', 'azimuth': '0.1443'}}], 14: [64, 49, 0.3, {'metrics': {'range': '0.0566', 'azimuth': '0.1432'}}], 15: [128, 25, 0.1, {'metrics': {'range': '0.0499', 'azimuth': '0.0710'}}], 16: [128, 25, 0.15, {'metrics': {'range': '0.0465', 'azimuth': '0.0714'}}], 17: [128, 25, 0.2, {'metrics': {'range': '0.0452', 'azimuth': '0.0729'}}], 18: [128, 25, 0.25, {'metrics': {'range': '0.0589', 'azimuth': '0.0916'}}], 19: [128, 25, 0.3, {'metrics': {'range': '0.0605', 'azimuth': '0.0925'}}], 20: [128, 36, 0.1, {'metrics': {'range': '0.0442', 'azimuth': '0.0711'}}], 21: [128, 36, 0.15, {'metrics': {'range': '0.0435', 'azimuth': '0.0707'}}], 22: [128, 36, 0.2, {'metrics': {'range': '0.0438', 'azimuth': '0.0711'}}], 23: [128, 36, 0.25, {'metrics': {'range': '0.0410', 'azimuth': '0.0669'}}], 24: [128, 36, 0.3, {'metrics': {'range': '0.0283', 'azimuth': '0.0677'}}], 25: [128, 49, 0.1, {'metrics': {'range': '0.0600', 'azimuth': '0.1045'}}], 26: [128, 49, 0.15, {'metrics': {'range': '0.0573', 'azimuth': '0.1059'}}], 27: [128, 49, 0.2, {'metrics': {'range': '0.0446', 'azimuth': '0.1031'}}], 28: [128, 49, 0.25, {'metrics': {'range': '0.0390', 'azimuth': '0.1031'}}], 29: [128, 49, 0.3, {'metrics': {'range': '0.0392', 'azimuth': '0.1097'}}], 30: [256, 25, 0.1, {'metrics': {'range': '0.0292', 'azimuth': '0.0715'}}], 31: [256, 25, 0.15, {'metrics': {'range': '0.0295', 'azimuth': '0.0677'}}], 32: [256, 25, 0.2, {'metrics': {'range': '0.0300', 'azimuth': '0.0709'}}], 33: [256, 25, 0.25, {'metrics': {'range': '0.0301', 'azimuth': '0.0698'}}], 34: [256, 25, 0.3, {'metrics': {'range': '0.0320', 'azimuth': '0.0595'}}], 35: [256, 36, 0.1, {'metrics': {'range': '0.0310', 'azimuth': '0.0571'}}], 36: [256, 36, 0.15, {'metrics': {'range': '0.0283', 'azimuth': '0.0591'}}], 37: [256, 36, 0.2, {'metrics': {'range': '0.0279', 'azimuth': '0.0541'}}], 38: [256, 36, 0.25, {'metrics': {'range': '0.0227', 'azimuth': '0.0517'}}], 39: [256, 36, 0.3, {'metrics': {'range': '0.0260', 'azimuth': '0.0457'}}], 40: [256, 49, 0.1, {'metrics': {'range': '0.0289', 'azimuth': '0.0654'}}], 41: [256, 49, 0.15, {'metrics': {'range': '0.0225', 'azimuth': '0.0599'}}], 42: [256, 49, 0.2, {'metrics': {'range': '0.0212', 'azimuth': '0.0593'}}], 43: [256, 49, 0.25, {'metrics': {'range': '0.0197', 'azimuth': '0.0564'}}], 44: [256, 49, 0.3, {'metrics': {'range': '0.0228', 'azimuth': '0.0597'}}], 45: [512, 25, 0.1, {'metrics': {'range': '0.0160', 'azimuth': '0.0325'}}], 46: [512, 25, 0.15, {'metrics': {'range': '0.0162', 'azimuth': '0.0324'}}], 47: [512, 25, 0.2, {'metrics': {'range': '0.0148', 'azimuth': '0.0327'}}], 48: [512, 25, 0.25, {'metrics': {'range': '0.0146', 'azimuth': '0.0315'}}], 49: [512, 25, 0.3, {'metrics': {'range': '0.0154', 'azimuth': '0.0337'}}], 50: [512, 36, 0.1, {'metrics': {'range': '0.0177', 'azimuth': '0.0301'}}], 51: [512, 36, 0.15, {'metrics': {'range': '0.0173', 'azimuth': '0.0297'}}], 52: [512, 36, 0.2, {'metrics': {'range': '0.0165', 'azimuth': '0.0274'}}], 53: [512, 36, 0.25, {'metrics': {'range': '0.0154', 'azimuth': '0.0270'}}], 54: [512, 36, 0.3, {'metrics': {'range': '0.0156', 'azimuth': '0.0289'}}], 55: [512, 49, 0.1, {'metrics': {'range': '0.0176', 'azimuth': '0.0314'}}], 56: [512, 49, 0.15, {'metrics': {'range': '0.0143', 'azimuth': '0.0267'}}], 57: [512, 49, 0.2, {'metrics': {'range': '0.0135', 'azimuth': '0.0249'}}], 58: [512, 49, 0.25, {'metrics': {'range': '0.0125', 'azimuth': '0.0251'}}], 59: [512, 49, 0.3, {'metrics': {'range': '0.0097', 'azimuth': '0.0204'}}], 60: [1024, 25, 0.1, {'metrics': {'range': '0.0130', 'azimuth': '0.0152'}}], 61: [1024, 25, 0.15, {'metrics': {'range': '0.0130', 'azimuth': '0.0154'}}], 62: [1024, 25, 0.2, {'metrics': {'range': '0.0133', 'azimuth': '0.0165'}}], 63: [1024, 25, 0.25, {'metrics': {'range': '0.0131', 'azimuth': '0.0163'}}], 64: [1024, 25, 0.3, {'metrics': {'range': '0.0175', 'azimuth': '0.0226'}}], 65: [1024, 36, 0.1, {'metrics': {'range': '0.0132', 'azimuth': '0.0190'}}], 66: [1024, 36, 0.15, {'metrics': {'range': '0.0129', 'azimuth': '0.0189'}}]}
-                    out = dataframe_creation(optimisation)
-                    # write metrics out as csv
-                    out.to_csv(path_or_buf=QA)
+                # optimisation = {0: [64, 25, 0.1, {'metrics': {'range': '0.1583', 'azimuth': '0.1380'}}], 1: [64, 25, 0.15, {'metrics': {'range': '0.0675', 'azimuth': '0.0995'}}], 2: [64, 25, 0.2, {'metrics': {'range': '0.0679', 'azimuth': '0.1005'}}], 3: [64, 25, 0.25, {'metrics': {'range': '0.0583', 'azimuth': '0.1042'}}], 4: [64, 25, 0.3, {'metrics': {'range': '0.0622', 'azimuth': '0.1122'}}], 5: [64, 36, 0.1, {'metrics': {'range': '0.0740', 'azimuth': '0.1039'}}], 6: [64, 36, 0.15, {'metrics': {'range': '0.0729', 'azimuth': '0.1037'}}], 7: [64, 36, 0.2, {'metrics': {'range': '0.0660', 'azimuth': '0.0929'}}], 8: [64, 36, 0.25, {'metrics': {'range': '0.0579', 'azimuth': '0.0702'}}], 9: [64, 36, 0.3, {'metrics': {'range': '0.0560', 'azimuth': '0.0721'}}], 10: [64, 49, 0.1, {'metrics': {'range': '0.0742', 'azimuth': '0.1511'}}], 11: [64, 49, 0.15, {'metrics': {'range': '0.0739', 'azimuth': '0.1422'}}], 12: [64, 49, 0.2, {'metrics': {'range': '0.0652', 'azimuth': '0.1422'}}], 13: [64, 49, 0.25, {'metrics': {'range': '0.0584', 'azimuth': '0.1443'}}], 14: [64, 49, 0.3, {'metrics': {'range': '0.0566', 'azimuth': '0.1432'}}], 15: [128, 25, 0.1, {'metrics': {'range': '0.0499', 'azimuth': '0.0710'}}], 16: [128, 25, 0.15, {'metrics': {'range': '0.0465', 'azimuth': '0.0714'}}], 17: [128, 25, 0.2, {'metrics': {'range': '0.0452', 'azimuth': '0.0729'}}], 18: [128, 25, 0.25, {'metrics': {'range': '0.0589', 'azimuth': '0.0916'}}], 19: [128, 25, 0.3, {'metrics': {'range': '0.0605', 'azimuth': '0.0925'}}], 20: [128, 36, 0.1, {'metrics': {'range': '0.0442', 'azimuth': '0.0711'}}], 21: [128, 36, 0.15, {'metrics': {'range': '0.0435', 'azimuth': '0.0707'}}], 22: [128, 36, 0.2, {'metrics': {'range': '0.0438', 'azimuth': '0.0711'}}], 23: [128, 36, 0.25, {'metrics': {'range': '0.0410', 'azimuth': '0.0669'}}], 24: [128, 36, 0.3, {'metrics': {'range': '0.0283', 'azimuth': '0.0677'}}], 25: [128, 49, 0.1, {'metrics': {'range': '0.0600', 'azimuth': '0.1045'}}], 26: [128, 49, 0.15, {'metrics': {'range': '0.0573', 'azimuth': '0.1059'}}], 27: [128, 49, 0.2, {'metrics': {'range': '0.0446', 'azimuth': '0.1031'}}], 28: [128, 49, 0.25, {'metrics': {'range': '0.0390', 'azimuth': '0.1031'}}], 29: [128, 49, 0.3, {'metrics': {'range': '0.0392', 'azimuth': '0.1097'}}], 30: [256, 25, 0.1, {'metrics': {'range': '0.0292', 'azimuth': '0.0715'}}], 31: [256, 25, 0.15, {'metrics': {'range': '0.0295', 'azimuth': '0.0677'}}], 32: [256, 25, 0.2, {'metrics': {'range': '0.0300', 'azimuth': '0.0709'}}], 33: [256, 25, 0.25, {'metrics': {'range': '0.0301', 'azimuth': '0.0698'}}], 34: [256, 25, 0.3, {'metrics': {'range': '0.0320', 'azimuth': '0.0595'}}], 35: [256, 36, 0.1, {'metrics': {'range': '0.0310', 'azimuth': '0.0571'}}], 36: [256, 36, 0.15, {'metrics': {'range': '0.0283', 'azimuth': '0.0591'}}], 37: [256, 36, 0.2, {'metrics': {'range': '0.0279', 'azimuth': '0.0541'}}], 38: [256, 36, 0.25, {'metrics': {'range': '0.0227', 'azimuth': '0.0517'}}], 39: [256, 36, 0.3, {'metrics': {'range': '0.0260', 'azimuth': '0.0457'}}], 40: [256, 49, 0.1, {'metrics': {'range': '0.0289', 'azimuth': '0.0654'}}], 41: [256, 49, 0.15, {'metrics': {'range': '0.0225', 'azimuth': '0.0599'}}], 42: [256, 49, 0.2, {'metrics': {'range': '0.0212', 'azimuth': '0.0593'}}], 43: [256, 49, 0.25, {'metrics': {'range': '0.0197', 'azimuth': '0.0564'}}], 44: [256, 49, 0.3, {'metrics': {'range': '0.0228', 'azimuth': '0.0597'}}], 45: [512, 25, 0.1, {'metrics': {'range': '0.0160', 'azimuth': '0.0325'}}], 46: [512, 25, 0.15, {'metrics': {'range': '0.0162', 'azimuth': '0.0324'}}], 47: [512, 25, 0.2, {'metrics': {'range': '0.0148', 'azimuth': '0.0327'}}], 48: [512, 25, 0.25, {'metrics': {'range': '0.0146', 'azimuth': '0.0315'}}], 49: [512, 25, 0.3, {'metrics': {'range': '0.0154', 'azimuth': '0.0337'}}], 50: [512, 36, 0.1, {'metrics': {'range': '0.0177', 'azimuth': '0.0301'}}], 51: [512, 36, 0.15, {'metrics': {'range': '0.0173', 'azimuth': '0.0297'}}], 52: [512, 36, 0.2, {'metrics': {'range': '0.0165', 'azimuth': '0.0274'}}], 53: [512, 36, 0.25, {'metrics': {'range': '0.0154', 'azimuth': '0.0270'}}], 54: [512, 36, 0.3, {'metrics': {'range': '0.0156', 'azimuth': '0.0289'}}], 55: [512, 49, 0.1, {'metrics': {'range': '0.0176', 'azimuth': '0.0314'}}], 56: [512, 49, 0.15, {'metrics': {'range': '0.0143', 'azimuth': '0.0267'}}], 57: [512, 49, 0.2, {'metrics': {'range': '0.0135', 'azimuth': '0.0249'}}], 58: [512, 49, 0.25, {'metrics': {'range': '0.0125', 'azimuth': '0.0251'}}], 59: [512, 49, 0.3, {'metrics': {'range': '0.0097', 'azimuth': '0.0204'}}], 60: [1024, 25, 0.1, {'metrics': {'range': '0.0130', 'azimuth': '0.0152'}}], 61: [1024, 25, 0.15, {'metrics': {'range': '0.0130', 'azimuth': '0.0154'}}], 62: [1024, 25, 0.2, {'metrics': {'range': '0.0133', 'azimuth': '0.0165'}}], 63: [1024, 25, 0.25, {'metrics': {'range': '0.0131', 'azimuth': '0.0163'}}], 64: [1024, 25, 0.3, {'metrics': {'range': '0.0175', 'azimuth': '0.0226'}}], 65: [1024, 36, 0.1, {'metrics': {'range': '0.0132', 'azimuth': '0.0190'}}], 66: [1024, 36, 0.15, {'metrics': {'range': '0.0129', 'azimuth': '0.0189'}}]}
+                out = dataframe_creation(optimisation)
+                # write metrics out as csv
+                out.to_csv(path_or_buf=QA)
 
-                    count += 1
-                    if count == maxiter:
-                        return None
+                count += 1
+                if count == maxiter:
+                    return None
 
     # perform optimisation on patches, samples and threshold (more parameters can be added)
     looping(maxiter=args.i)
@@ -325,17 +321,27 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling):
     print("Offset Tracking")
     print("=====")
 
+    # window sizes
+    rwin = 205
+    azwin = 1024
+
+    # multilook-faktoren
+    rstep = 100
+    azstep = 20
+
+    # Start and stop lines
     az_start = "-" # 4000
     az_end = "-"
     r_start = "-"
     r_end = "-" # 13000
 
-    int_filter = 1
+    int_filter = 1 # only when oversample = 1
+
     pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off, # INPUT
                            offset, ccp, "-", "-", # offs, ccp, r_patch_size, a_patch_size -> from off
                            "-", oversampling, # text offsets
                            "-", # threshold -> from off
-                           "-", "-", r_start, r_end, az_start, az_end, # starting and stopping pixel,
+                           rstep, azstep, r_start, r_end, az_start, az_end, # starting and stopping pixel,
                            "-", "-", # lanczos interp, bandwidth
                            deramping, int_filter,
                            0, 0, # printing
@@ -343,7 +349,7 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling):
 
 def displacements(offset, ccp, slc1_par, off, disp,
                   disp_real, disp_imag, disp_ints,
-                  out):
+                  out, rmli1, rmli1_par):
 
     print("=====")
     print("Displacement calculation")
@@ -353,11 +359,13 @@ def displacements(offset, ccp, slc1_par, off, disp,
     thresh = "-"
     pg.offset_tracking(offset, ccp, slc1_par, off, disp, "-",
                        mode, thresh, "-")
-    # TODO: converting real, imaginary and magnitude to raster maps:
-    # use awkpy from functions
-    width = 2800
 
-    pg.cpx_to_real(disp, disp_real, width, 0)
+    width = int(awkpy(rmli1_par, "range_samples", 2))
+    print(width)
+    width = width / 10
+
+    # TODO: converting real, imaginary and magnitude to raster maps:
+    pg.cpx_to_real(disp, disp_real, width, 0) #
     pg.cpx_to_real(disp, disp_imag, width, 1)
     pg.cpx_to_real(disp, disp_ints, width, 2)
 
@@ -373,11 +381,9 @@ def main():
     print("=====")
     print("\n")
 
-    # TODO: phase tracking integration (mainly step 2!!) -> Read QA file from offset_fit properly
     # TODO: Add -p argument for every step
-    # TODO: Get width of MLI
-    # TODO: Width of output displacement map?
     # TODO: Init_offset_orbit bei auch koregistrierte SLCs?
+    # TODO: Significance of oversampling factors
 
     # Folder Structure:
     #     | DEM
@@ -435,6 +441,9 @@ def main():
         rslc1_par = [os.path.join(main_path, x) for x in rslcs_par if date1 in x][0]
         rslc2_par = [os.path.join(main_path, x) for x in rslcs_par if date2 in x][0]
 
+        rmli1 = [os.path.join(main_path, rmli) for rmli in os.listdir(main_path) if rmli.endswith(".rmli")][0]
+        rmli1_par = [os.path.join(main_path, rmli) for rmli in os.listdir(main_path) if rmli.endswith(".rmli.par")][0]
+
         # looping through steps indicated by input -s, adding possible -> e.g. `-s 1 2 3 4 5`
         for step in sorted(args.steps):
             if int(step) == 1:
@@ -452,10 +461,9 @@ def main():
             elif int(step) == 5:
                 displacements(offset, ccp, rslc1_par, off, disp,
                               disp_real, disp_imag, disp_ints,
-                              out)
+                              out, rmli1, rmli1_par)
             else:
                 pass
-        break
 
 if __name__ == '__main__':
     main()

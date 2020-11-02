@@ -42,3 +42,12 @@ Init_offset_orbit bei auch koregistrierte SLCs?
 
 Oversampling = 1 - what does it mean?
         
+*** 
+### 02.11.2020 TO-DOs
+
+- SLC offset implementation -> Fringe script (**R**)
+- Displacement output (width?) -> Intensity script (**K**)
+
+- Map creation
+- Download of Misha's scene
+- Seminar work manuskript writing
