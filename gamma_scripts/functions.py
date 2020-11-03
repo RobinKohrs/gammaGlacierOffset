@@ -97,6 +97,7 @@ def get_files(slc_dir, image="main", file_ending=[".slc"]):
     :param referece:
     :return:
     """
+
     files_dict = file_dict(slc_dir)
     files_all = []
 
@@ -106,11 +107,6 @@ def get_files(slc_dir, image="main", file_ending=[".slc"]):
             key1 = date_pair
             key2 = date_main
             files = [file for file in files_dict[key1][key2] for ty in file_ending if file.endswith(ty)]
-            # check if mosaic is a substring of any of the elements of file_ending
-            if any("mosaic" in ele for ele in file_ending):
-                pass
-            else:
-                files = [x for x in files if "mosaic" not in x]
             files_all.append(files)
 
         elif image == "secondary" or image == "s":
@@ -119,11 +115,6 @@ def get_files(slc_dir, image="main", file_ending=[".slc"]):
             key2 = date_secondary
             files = [file for file in files_dict[key1][key2] for ty in file_ending if file.endswith(ty)]
             # check if mosaic is a substring of any of the elements of file_ending
-            if any("mosaic" in ele for ele in file_ending):
-                pass
-            else:
-                files = [x for x in files if "mosaic" not in x]
-
             files_all.append(files)
 
         else:
@@ -169,8 +160,5 @@ if __name__ == "__main__":
     # Only for testing on the command line
     # This module is intended to be imported
     #######################
-    # slc_dir = "../data/SLC"
-    # b = get_files(slc_dir, file_ending=["mosaic.mli"], image="m")
-    # print(b)
-
-    awkpy()
+    slc_dir = "../data/SLC"
+    b = get_files(slc_dir, file_ending=["mosaic_slc"], image="m")
