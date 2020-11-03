@@ -65,7 +65,14 @@
 - The default position is in the middle of the image with a size of 1024 x 1024 pixels
 - User can also set a threshold for cross-correlation under which the offset estimates get
   rejected
-- 
+
+
+### Even more precise estimates of the offsets `offset_slc`
+
+- The range search window ,rwin, can either be set manually, or it takes the input from the offset
+parameter file and the line `offset_estimation_azimuth_samples`
+- Can't be bigger than the interferogram patch size `ISZ`, by default 16
+- When running the `offset_SLC`, the initial `.off`-file will be updated  
  
 
 
