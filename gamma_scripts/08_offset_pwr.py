@@ -28,12 +28,6 @@ parser.add_argument("-s", "--step", dest="steps",
                          "optimise offsets (2)", default=[1],
                     nargs="+", type=int)
 
-# 1 = Intensity tracking
-# 2 = Fringe visibility tracking
-# parser.add_argument("-a", "--algorithm", dest="trackingAlgorithm",
-#                     help="(Input) Intensity Tracking (1) or Fringe Visibility Tracking (2)",
-#                     default=1, type=int)
-
 parser.add_argument("-i", "--iters", dest="i",
                     help="(input) is number of iterations performed as optimisation of the offset [int]",
                     default=3, type=int)
@@ -44,19 +38,11 @@ parser.add_argument("-p", "--print", dest="print", help="only print cmd call", a
 global args
 args = parser.parse_args()
 
-# algo = args.trackingAlgorithm
-#
-# if algo == 1:
-#     method = "intensity"
-# elif algo == 2:
-#     method = "fringe"
-
-if args.print == True:
+if args.print:
     print("working locally...")
 else:
     try:
         import py_gamma as pg
-        print("working on the server...")
     except ImportError as err:
         print("Working on the server...")
         print("However the py_gamma-module can not be loaded...")
@@ -67,8 +53,9 @@ else:
 # USER INPUT
 #########################################
 
-deramping = 1 # yes
+deramping = 1  # yes
 method = "intensity"
+
 
 #########################################
 # CREATING OFFSETS (actually belongs to another script
@@ -79,8 +66,8 @@ def initiate_offsets(slc1_par, slc2_par, off):
 
     override_input = '\n\n\n\n\n\n\n'
 
-    r_pos = 2000 # range position orbit init
-    az_pos = 11000 # azimuth position orbit init
+    r_pos = 2000  # range position orbit init
+    az_pos = 11000  # azimuth position orbit init
 
     if os.path.isfile(off):
         os.remove(off)
@@ -90,8 +77,8 @@ def initiate_offsets(slc1_par, slc2_par, off):
     print(TGREEN + method + ENDC)
     print("=====\n")
 
-    sysinput = sys.stdin # save std input
-    f = StringIO(override_input) # override input 7x
+    sysinput = sys.stdin  # save std input
+    f = StringIO(override_input)  # override input 7x
     sys.stdin = f
     print(sys.stdin)
 
@@ -100,7 +87,7 @@ def initiate_offsets(slc1_par, slc2_par, off):
     pg.create_offset(slc1_par, slc2_par, off, "1") if not args.print else print(cmd1)
 
     f.close()
-    sys.stdin = sysinput # bring std input back
+    sys.stdin = sysinput  # bring std input back
 
     print("=====")
     print("Initiating offsets with precise Sentinel-1 orbit information")
@@ -115,8 +102,8 @@ def initiate_offsets(slc1_par, slc2_par, off):
 
     print(f"Full initiation successful. \nOffset file: {off}.")
 
-def reading_QA(QA):
 
+def reading_QA(QA):
     # read IO output QA_temp
     lines = QA.split(sep="\n")
 
@@ -135,12 +122,12 @@ def reading_QA(QA):
     except:
         print(TRED + "QA_temp console output document not readable" + ENDC)
 
-    dict = {"range" : sd_metric[0],
-            "azimuth" : sd_metric[1]}
+    dict = {"range": sd_metric[0],
+            "azimuth": sd_metric[1]}
     return (dict)
 
-def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling, snr):
 
+def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling, snr):
     # delete QA file
     if os.path.isfile(QA):
         os.remove(QA)
@@ -228,24 +215,11 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
 
                 if not args.print:
                     pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
-                          patch, patch, "-", oversampling, sample, sample,
-                          threshold, "-", "-", deramping)
+                                  patch, patch, "-", oversampling, sample, sample,
+                                  threshold, "-", "-", deramping)
                 else:
                     print(cmd)
                     return None
-
-                # elif algo == 2:
-                #     cmd = f"offset_SLC {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {snr} {patch} {patch} " \
-                #           f"- {oversampling} {sample} {sample} {threshold}"
-                #
-                #     if not args.print:
-                #         pg.offset_SLC(slc1, slc2, slc1_par, slc2_par, off, reg, snr,
-                #                   patch, patch, "-", oversampling,
-                #                   sample, sample, threshold, "-")
-                #     else:
-                #         print(cmd)
-                #         return None
-
 
                 # store reference stdout
                 old_stdout = sys.stdout
@@ -270,10 +244,9 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
                 # print("Metrics:", qa_read)
 
                 # update optimisation dictionary
-                optimisation[count] = [patch, sample, threshold, {"metrics" : qa_read}]
+                optimisation[count] = [patch, sample, threshold, {"metrics": qa_read}]
                 print(optimisation)
 
-                # optimisation = {0: [64, 25, 0.1, {'metrics': {'range': '0.1583', 'azimuth': '0.1380'}}], 1: [64, 25, 0.15, {'metrics': {'range': '0.0675', 'azimuth': '0.0995'}}], 2: [64, 25, 0.2, {'metrics': {'range': '0.0679', 'azimuth': '0.1005'}}], 3: [64, 25, 0.25, {'metrics': {'range': '0.0583', 'azimuth': '0.1042'}}], 4: [64, 25, 0.3, {'metrics': {'range': '0.0622', 'azimuth': '0.1122'}}], 5: [64, 36, 0.1, {'metrics': {'range': '0.0740', 'azimuth': '0.1039'}}], 6: [64, 36, 0.15, {'metrics': {'range': '0.0729', 'azimuth': '0.1037'}}], 7: [64, 36, 0.2, {'metrics': {'range': '0.0660', 'azimuth': '0.0929'}}], 8: [64, 36, 0.25, {'metrics': {'range': '0.0579', 'azimuth': '0.0702'}}], 9: [64, 36, 0.3, {'metrics': {'range': '0.0560', 'azimuth': '0.0721'}}], 10: [64, 49, 0.1, {'metrics': {'range': '0.0742', 'azimuth': '0.1511'}}], 11: [64, 49, 0.15, {'metrics': {'range': '0.0739', 'azimuth': '0.1422'}}], 12: [64, 49, 0.2, {'metrics': {'range': '0.0652', 'azimuth': '0.1422'}}], 13: [64, 49, 0.25, {'metrics': {'range': '0.0584', 'azimuth': '0.1443'}}], 14: [64, 49, 0.3, {'metrics': {'range': '0.0566', 'azimuth': '0.1432'}}], 15: [128, 25, 0.1, {'metrics': {'range': '0.0499', 'azimuth': '0.0710'}}], 16: [128, 25, 0.15, {'metrics': {'range': '0.0465', 'azimuth': '0.0714'}}], 17: [128, 25, 0.2, {'metrics': {'range': '0.0452', 'azimuth': '0.0729'}}], 18: [128, 25, 0.25, {'metrics': {'range': '0.0589', 'azimuth': '0.0916'}}], 19: [128, 25, 0.3, {'metrics': {'range': '0.0605', 'azimuth': '0.0925'}}], 20: [128, 36, 0.1, {'metrics': {'range': '0.0442', 'azimuth': '0.0711'}}], 21: [128, 36, 0.15, {'metrics': {'range': '0.0435', 'azimuth': '0.0707'}}], 22: [128, 36, 0.2, {'metrics': {'range': '0.0438', 'azimuth': '0.0711'}}], 23: [128, 36, 0.25, {'metrics': {'range': '0.0410', 'azimuth': '0.0669'}}], 24: [128, 36, 0.3, {'metrics': {'range': '0.0283', 'azimuth': '0.0677'}}], 25: [128, 49, 0.1, {'metrics': {'range': '0.0600', 'azimuth': '0.1045'}}], 26: [128, 49, 0.15, {'metrics': {'range': '0.0573', 'azimuth': '0.1059'}}], 27: [128, 49, 0.2, {'metrics': {'range': '0.0446', 'azimuth': '0.1031'}}], 28: [128, 49, 0.25, {'metrics': {'range': '0.0390', 'azimuth': '0.1031'}}], 29: [128, 49, 0.3, {'metrics': {'range': '0.0392', 'azimuth': '0.1097'}}], 30: [256, 25, 0.1, {'metrics': {'range': '0.0292', 'azimuth': '0.0715'}}], 31: [256, 25, 0.15, {'metrics': {'range': '0.0295', 'azimuth': '0.0677'}}], 32: [256, 25, 0.2, {'metrics': {'range': '0.0300', 'azimuth': '0.0709'}}], 33: [256, 25, 0.25, {'metrics': {'range': '0.0301', 'azimuth': '0.0698'}}], 34: [256, 25, 0.3, {'metrics': {'range': '0.0320', 'azimuth': '0.0595'}}], 35: [256, 36, 0.1, {'metrics': {'range': '0.0310', 'azimuth': '0.0571'}}], 36: [256, 36, 0.15, {'metrics': {'range': '0.0283', 'azimuth': '0.0591'}}], 37: [256, 36, 0.2, {'metrics': {'range': '0.0279', 'azimuth': '0.0541'}}], 38: [256, 36, 0.25, {'metrics': {'range': '0.0227', 'azimuth': '0.0517'}}], 39: [256, 36, 0.3, {'metrics': {'range': '0.0260', 'azimuth': '0.0457'}}], 40: [256, 49, 0.1, {'metrics': {'range': '0.0289', 'azimuth': '0.0654'}}], 41: [256, 49, 0.15, {'metrics': {'range': '0.0225', 'azimuth': '0.0599'}}], 42: [256, 49, 0.2, {'metrics': {'range': '0.0212', 'azimuth': '0.0593'}}], 43: [256, 49, 0.25, {'metrics': {'range': '0.0197', 'azimuth': '0.0564'}}], 44: [256, 49, 0.3, {'metrics': {'range': '0.0228', 'azimuth': '0.0597'}}], 45: [512, 25, 0.1, {'metrics': {'range': '0.0160', 'azimuth': '0.0325'}}], 46: [512, 25, 0.15, {'metrics': {'range': '0.0162', 'azimuth': '0.0324'}}], 47: [512, 25, 0.2, {'metrics': {'range': '0.0148', 'azimuth': '0.0327'}}], 48: [512, 25, 0.25, {'metrics': {'range': '0.0146', 'azimuth': '0.0315'}}], 49: [512, 25, 0.3, {'metrics': {'range': '0.0154', 'azimuth': '0.0337'}}], 50: [512, 36, 0.1, {'metrics': {'range': '0.0177', 'azimuth': '0.0301'}}], 51: [512, 36, 0.15, {'metrics': {'range': '0.0173', 'azimuth': '0.0297'}}], 52: [512, 36, 0.2, {'metrics': {'range': '0.0165', 'azimuth': '0.0274'}}], 53: [512, 36, 0.25, {'metrics': {'range': '0.0154', 'azimuth': '0.0270'}}], 54: [512, 36, 0.3, {'metrics': {'range': '0.0156', 'azimuth': '0.0289'}}], 55: [512, 49, 0.1, {'metrics': {'range': '0.0176', 'azimuth': '0.0314'}}], 56: [512, 49, 0.15, {'metrics': {'range': '0.0143', 'azimuth': '0.0267'}}], 57: [512, 49, 0.2, {'metrics': {'range': '0.0135', 'azimuth': '0.0249'}}], 58: [512, 49, 0.25, {'metrics': {'range': '0.0125', 'azimuth': '0.0251'}}], 59: [512, 49, 0.3, {'metrics': {'range': '0.0097', 'azimuth': '0.0204'}}], 60: [1024, 25, 0.1, {'metrics': {'range': '0.0130', 'azimuth': '0.0152'}}], 61: [1024, 25, 0.15, {'metrics': {'range': '0.0130', 'azimuth': '0.0154'}}], 62: [1024, 25, 0.2, {'metrics': {'range': '0.0133', 'azimuth': '0.0165'}}], 63: [1024, 25, 0.25, {'metrics': {'range': '0.0131', 'azimuth': '0.0163'}}], 64: [1024, 25, 0.3, {'metrics': {'range': '0.0175', 'azimuth': '0.0226'}}], 65: [1024, 36, 0.1, {'metrics': {'range': '0.0132', 'azimuth': '0.0190'}}], 66: [1024, 36, 0.15, {'metrics': {'range': '0.0129', 'azimuth': '0.0189'}}]}
                 out = dataframe_creation(optimisation)
                 # write metrics out as csv
                 out.to_csv(path_or_buf=QA)
@@ -287,7 +260,6 @@ def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversamp
 
 
 def final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
-
     print("=====")
     print("Final optimisation")
     print("=====\n\n")
@@ -315,8 +287,8 @@ def final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversam
     # GAMMA
     pg.offset_fit(reg, qmf, off, "-", "-")
 
-def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling):
 
+def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling, offset_QA):
     print("=====")
     print("Offset Tracking")
     print("=====")
@@ -330,32 +302,33 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, oversampling):
     azstep = 20
 
     # Start and stop lines
-    az_start = "-" # 4000
+    az_start = "-"  # 4000
     az_end = "-"
     r_start = "-"
-    r_end = "-" # 13000
+    r_end = "-"  # 13000
 
-    int_filter = 1 # only when oversample = 1
+    int_filter = 1  # only when oversample = 1
+    threshold = 0.1
 
-    pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off, # INPUT
-                           offset, ccp, "-", "-", # offs, ccp, r_patch_size, a_patch_size -> from off
-                           "-", oversampling, # text offsets
-                           "-", # threshold -> from off
-                           rstep, azstep, r_start, r_end, az_start, az_end, # starting and stopping pixel,
-                           "-", "-", # lanczos interp, bandwidth
+    pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off,  # INPUT
+                           offset, ccp, rwin, azwin,  # offs, ccp, r_patch_size, a_patch_size -> from off
+                           offset_QA, oversampling,  # text offsets
+                           threshold,  # threshold -> from off
+                           rstep, azstep, r_start, r_end, az_start, az_end,  # starting and stopping pixel,
+                           "-", "-",  # lanczos interp, bandwidth
                            deramping, int_filter,
-                           0, 0, # printing
-                           "-") # cross-correlation for each patch
+                           0, 0,  # printing
+                           "-")  # cross-correlation for each patch
+
 
 def displacements(offset, ccp, slc1_par, off, disp,
                   disp_real, disp_imag, disp_ints,
                   out, rmli1, rmli1_par):
-
     print("=====")
     print("Displacement calculation")
     print("=====")
 
-    mode = 2 # ground range geometry
+    mode = 2  # ground range geometry
     thresh = "-"
     pg.offset_tracking(offset, ccp, slc1_par, off, disp, "-",
                        mode, thresh, "-")
@@ -365,7 +338,7 @@ def displacements(offset, ccp, slc1_par, off, disp,
     width = width / 10
 
     # TODO: converting real, imaginary and magnitude to raster maps:
-    pg.cpx_to_real(disp, disp_real, width, 0) #
+    pg.cpx_to_real(disp, disp_real, width, 0)  #
     pg.cpx_to_real(disp, disp_imag, width, 1)
     pg.cpx_to_real(disp, disp_ints, width, 2)
 
@@ -373,7 +346,6 @@ def displacements(offset, ccp, slc1_par, off, disp,
 
 
 def main():
-
     print("\n")
     print("=====")
     print(TYEL + "Processing with method:" + ENDC)
@@ -382,6 +354,7 @@ def main():
     print("\n")
 
     # TODO: Add -p argument for every step
+
     # TODO: Init_offset_orbit bei auch koregistrierte SLCs?
     # TODO: Significance of oversampling factors
 
@@ -405,7 +378,7 @@ def main():
     oversampling = 1  # what does that actually mean?
 
     # specify ending of file to be used as basename giver
-    dict = file_dict(slc_dir = slc_dir, ending=".mosaic_slc")
+    dict = file_dict(slc_dir=slc_dir, ending=".mosaic_slc")
 
     # print(dict)
     # dict = {'20200911_20200923': {'20200911': ['20200911_vv_iw2.slc', '20200911_vv_iw2.slc.par'], '20200923': ['20200923_vv_iw2.slc.par', '20200923_vv_iw2.slc']}}
@@ -416,21 +389,23 @@ def main():
 
         print(date2)
         # concat path
-        main_path = os.path.join(tuples_dir, datepair)
+        main_path = os.path.join(tuples_dir, datepair, method, datepair)
         path_datepair = os.path.join(tuples_dir, datepair, method)
 
-        QA = os.path.join(path_datepair, datepair + ".QA")
-        off = os.path.join(path_datepair, datepair + ".off")
-        reg = os.path.join(path_datepair, datepair + ".reg")
-        qmf = os.path.join(path_datepair, datepair + ".qmf")
-        snr = os.path.join(path_datepair, datepair + ".snr")
-        offset = os.path.join(path_datepair, datepair + ".offset")
-        ccp = os.path.join(path_datepair, datepair + ".ccp") # cross-correlation for each patch
-        disp = os.path.join(path_datepair, datepair + ".disp")
-        disp_real = os.path.join(path_datepair, datepair + ".disp_real")
-        disp_imag = os.path.join(path_datepair, datepair + ".disp_imag")
-        disp_ints = os.path.join(path_datepair, datepair + ".disp_ints")
-        out = os.path.join(path_datepair, datepair + ".temp_displacement_map.tif")
+        # file all inside the datepair tuple and in the method folder "intensity"
+        QA = main_path + ".QA"
+        off = main_path + ".off"
+        reg = main_path + ".reg"
+        qmf = main_path + ".qmf"
+        snr = main_path + ".snr"
+        offset = main_path + ".offset"
+        ccp = main_path + ".ccp"  # cross-correlation for each patch
+        disp = main_path + ".disp"
+        disp_real = main_path + ".disp_real"
+        disp_imag = main_path + ".disp_imag"
+        disp_ints = main_path + ".disp_ints"
+        out = main_path + ".temp_displacement_map.tif"
+        offset_QA = main_path + "offset_QA"
 
         # fetching SLCs
         # fetching main
@@ -457,13 +432,14 @@ def main():
                 final_fit_offsets(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA, oversampling)
             elif int(step) == 4:
                 # Offset Tracking algorithm
-                tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, oversampling)
+                tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, oversampling, offset_QA)
             elif int(step) == 5:
                 displacements(offset, ccp, rslc1_par, off, disp,
                               disp_real, disp_imag, disp_ints,
                               out, rmli1, rmli1_par)
             else:
                 pass
+
 
 if __name__ == '__main__':
     main()
