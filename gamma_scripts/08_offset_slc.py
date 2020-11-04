@@ -10,7 +10,6 @@ import re
 import argparse
 import sys
 from io import StringIO
-import numpy as np
 import itertools
 from functions import *
 import subprocess
