@@ -74,7 +74,7 @@ def enhance_offsets(slc1, slc1_par, slc2, slc2_par, off, out_cpx_offset_estimate
     """
 
     # range window
-    rwin = 10 #TODO: No idea, bust bust be smaller than the patchsize (which also should be small for fringe visibility??!!)
+    rwin = 10 #TODO: No idea, but must be smaller than the patchsize (which also should be small for fringe visibility??!!)
     azwin = 2
 
     # number of oversampling
@@ -82,7 +82,7 @@ def enhance_offsets(slc1, slc1_par, slc2, slc2_par, off, out_cpx_offset_estimate
     nr = "-"
     naz = "-"
     thres = "-"
-    ISZ = "-" # defaults to 16 and should be small, but can we maybe make bigger?
+    ISZ = "-" # Patchsize defaults to 16 and should be small, but can we maybe make bigger?
     pflag = 1
 
 
@@ -124,7 +124,7 @@ def offset_fit(offs, snr,  off, cpx_offsets, txt_offsets):
 
 # Precise estimation of the offsets
 
-def offset_SLC_tracking(slc1, slc2, scl1_par, slc2_par, off, cpx_offsets, snr,
+def offset_SLC_tracking(slc1, slc2, slc1_par, slc2_par, off, cpx_offsets, snr,
                         range_window = "-", azimuth_window = "-", offsets_txt = "-", n_ovr = "-",
                         thres = "-", rstep = "-", azstep="-", rstart = "-", azstart="-", azstop="-", isz="-"):
     """
@@ -157,10 +157,21 @@ def offset_SLC_tracking(slc1, slc2, scl1_par, slc2_par, off, cpx_offsets, snr,
     :return:
     """
 
+    cmd = f"offset_SLC_tracking {slc1} {slc2} {slc1_par} {slc2_par} {off} {cpx_offsets} {snr} " \
+          f"{range_window} {azimuth_window} {offsets_txt} {n_ovr} {thres} {rstep} {azstep} {rstart} " \
+          f"{azstart} {azstop} {isz}"
 
 
+    out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
 
+    # if there was some output
+    if out:
+        # write output to file
+        f = os.path.join(os.path.dirname(off), "output_offset_SLC_tracking.txt")
+        with open(f, "w") as src:
+            src.write(out.stdout.decode("UTF-8"))
 
+    return None
 
 
 def main():
@@ -202,7 +213,8 @@ def main():
 
         # paths for offset_SLC_tracking
         offset_slc_tracking_estimates = os.path.join(path_method, "offset_slc_tracking_estimates.cpx")
-        offset_slc_snr_estimates = os.path.join(path_method, "offset_slc_snr_estimates.snr")
+        offset_slc_snr_estimates = os.path.join(path_method, "offset_slc_tracking_snr_estimates.snr")
+        offset_slc_offsets_text = os.path.join(path_method, "offset_slc_tracking_estimates.txt")
 
         # loop over all the steps
         for step in sorted(args.steps):
@@ -222,7 +234,9 @@ def main():
 
 
             elif int(step) == 3:
-                offset_SLC_tracking(rslc1, rslc2, rslc1_par, rslc2_par, method_off, )
+                print(TGREEN + "Precise estimation of the Offsets: %s ... " % (datepair) + ENDC)
+                offset_SLC_tracking(rslc1, rslc2, rslc1_par, rslc2_par, method_off, offset_slc_tracking_estimates,
+                                    offset_slc_snr_estimates)
             elif int(step) == 4:
                 pass
             elif int(step) == 5:
