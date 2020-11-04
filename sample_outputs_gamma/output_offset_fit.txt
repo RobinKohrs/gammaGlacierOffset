@@ -1,0 +1,149 @@
+*** Range and azimuth offset polynomial estimation ***
+*** Copyright 2020, Gamma Remote Sensing, v3.5 20-May-2020 clw/uw/cm ***
+offset estimates: ../data/tuples/20200911_20200923/fringe/cpx_offset.off
+cross-correlation or SNR data: ../data/tuples/20200911_20200923/fringe/20200911_20200923.snr
+ISP offset parameter file: ../data/tuples/20200911_20200923/fringe/20200911_20200923.off
+culled offsets (fcomplex): ../data/tuples/20200911_20200923/fringe/displace.cpx
+
+culled list of offsets and cross-correlation (text format): ../data/tuples/20200911_20200923/fringe/displace.txt
+
+number of offset polynomial parameters: 4: a0 + a1*x + a2*y + a3*x*y
+number of range samples: 32  number of azimuth samples: 64
+number of samples in offset map: 2048
+range sample spacing: 797  azimuth sample spacing: 192
+solution: 1128 offset estimates accepted out of 2048 samples
+
+range fit SVD singular values:        2.75132e+10   2.53933e+01   1.00373e+06   8.91506e+05
+azimuth fit SVD singular values:      2.75132e+10   2.53933e+01   1.00373e+06   8.91506e+05
+range offset poly. coeff.:                0.29378  -2.99326e-05  -4.65882e-05   5.17678e-09
+azimuth offset poly. coeff.:             -0.04710   3.99051e-06   2.69271e-06  -4.24770e-10
+model fit std. dev. (samples) range:   2.1490  azimuth:   0.7803
+range, azimuth error thresholds:     5.3725     1.9508
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.73505e+10   2.53409e+01   1.00268e+06   8.84314e+05
+azimuth fit SVD singular values:      2.73505e+10   2.53409e+01   1.00268e+06   8.84314e+05
+
+*** Improved least-squares polynomial coefficients 1 ***
+solution: 1112 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.09551   4.91685e-06   7.43195e-06  -4.83181e-10
+azimuth offset poly. coeff.:             -0.04277   3.36052e-06   2.13770e-06  -3.60915e-10
+model fit std. dev. (samples) range:   1.7967  azimuth:   0.3966
+range, azimuth error thresholds:     4.4917     0.9914
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.72664e+10   2.52417e+01   9.98495e+05   8.81412e+05
+azimuth fit SVD singular values:      2.72664e+10   2.52417e+01   9.98495e+05   8.81412e+05
+
+*** Improved least-squares polynomial coefficients 2 ***
+solution: 1032 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.02919   7.01648e-07   2.40495e-06  -7.10571e-11
+azimuth offset poly. coeff.:             -0.02762   1.91770e-06   1.23390e-06  -2.18636e-10
+model fit std. dev. (samples) range:   1.4716  azimuth:   0.3364
+range, azimuth error thresholds:     3.6789     0.8410
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.70988e+10   2.50573e+01   9.90816e+05   8.75534e+05
+azimuth fit SVD singular values:      2.70988e+10   2.50573e+01   9.90816e+05   8.75534e+05
+
+*** Improved least-squares polynomial coefficients 3 ***
+solution: 899 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.02448  -4.53887e-07   1.53858e-06   1.33038e-10
+azimuth offset poly. coeff.:             -0.00422   1.22312e-07  -3.49403e-07  -2.59907e-11
+model fit std. dev. (samples) range:   0.8917  azimuth:   0.2305
+range, azimuth error thresholds:     2.2293     0.5763
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.70017e+10   2.49623e+01   9.86809e+05   8.72020e+05
+azimuth fit SVD singular values:      2.70017e+10   2.49623e+01   9.86809e+05   8.72020e+05
+
+*** Improved least-squares polynomial coefficients 4 ***
+solution: 812 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:                0.00324  -1.67934e-06  -1.23187e-06   2.52761e-10
+azimuth offset poly. coeff.:              0.00498  -3.40085e-07  -1.06354e-06   1.00772e-11
+model fit std. dev. (samples) range:   0.4100  azimuth:   0.1743
+range, azimuth error thresholds:     1.0251     0.4358
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.68996e+10   2.48587e+01   9.82276e+05   8.68745e+05
+azimuth fit SVD singular values:      2.68996e+10   2.48587e+01   9.82276e+05   8.68745e+05
+
+*** Improved least-squares polynomial coefficients 5 ***
+solution: 750 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.00261  -9.42630e-07  -2.84016e-07   1.48911e-10
+azimuth offset poly. coeff.:              0.00098   1.21979e-07  -4.96290e-07  -5.20445e-11
+model fit std. dev. (samples) range:   0.1777  azimuth:   0.1374
+range, azimuth error thresholds:     0.4443     0.3435
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.67456e+10   2.47686e+01   9.77596e+05   8.64624e+05
+azimuth fit SVD singular values:      2.67456e+10   2.47686e+01   9.77596e+05   8.64624e+05
+
+*** Improved least-squares polynomial coefficients 6 ***
+solution: 694 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.00193  -1.04875e-06  -5.00114e-07   1.64305e-10
+azimuth offset poly. coeff.:             -0.00321   3.49491e-07  -9.81972e-08  -6.87184e-11
+model fit std. dev. (samples) range:   0.1179  azimuth:   0.1083
+range, azimuth error thresholds:     0.2948     0.2707
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.65062e+10   2.45643e+01   9.71773e+05   8.57470e+05
+azimuth fit SVD singular values:      2.65062e+10   2.45643e+01   9.71773e+05   8.57470e+05
+
+*** Improved least-squares polynomial coefficients 7 ***
+solution: 641 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.00733  -5.84264e-07  -1.08948e-08   1.07930e-10
+azimuth offset poly. coeff.:             -0.00246   1.09272e-07  -1.99982e-07  -3.42121e-11
+model fit std. dev. (samples) range:   0.0846  azimuth:   0.0958
+range, azimuth error thresholds:     0.2115     0.2395
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.63074e+10   2.44521e+01   9.65902e+05   8.53025e+05
+azimuth fit SVD singular values:      2.63074e+10   2.44521e+01   9.65902e+05   8.53025e+05
+
+*** Improved least-squares polynomial coefficients 8 ***
+solution: 611 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.00730  -5.81248e-07  -5.63754e-08   1.08192e-10
+azimuth offset poly. coeff.:             -0.00339   3.80950e-08  -2.24269e-07  -7.51487e-12
+model fit std. dev. (samples) range:   0.0722  azimuth:   0.0904
+range, azimuth error thresholds:     0.1804     0.2259
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.59862e+10   2.43952e+01   9.64329e+05   8.43917e+05
+azimuth fit SVD singular values:      2.59862e+10   2.43952e+01   9.64329e+05   8.43917e+05
+
+*** Improved least-squares polynomial coefficients 9 ***
+solution: 592 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.00957  -4.12419e-07   2.65075e-07   8.22556e-11
+azimuth offset poly. coeff.:              0.00394  -4.78199e-07  -1.00535e-06   6.08522e-11
+model fit std. dev. (samples) range:   0.0676  azimuth:   0.0865
+range, azimuth error thresholds:     0.1691     0.2162
+cross-correlation threshold:     0.1000
+
+range fit SVD singular values:        2.59273e+10   2.43781e+01   9.63450e+05   8.42059e+05
+azimuth fit SVD singular values:      2.59273e+10   2.43781e+01   9.63450e+05   8.42059e+05
+
+*** Improved least-squares polynomial coefficients 10 ***
+solution: 581 offset estimates accepted out of 2048 samples
+range offset poly. coeff.:               -0.00989  -3.97653e-07   2.92757e-07   8.02019e-11
+azimuth offset poly. coeff.:              0.00325  -3.86923e-07  -9.00255e-07   4.56139e-11
+model fit std. dev. (samples) range:   0.0657  azimuth:   0.0843
+
+total number of culling iterations: 10
+final solution: 581 offset estimates accepted out of 2048 samples
+
+final range offset poly. coeff.:             -0.00989  -3.97653e-07   2.92757e-07   8.02019e-11
+final range offset poly. coeff. errors:   2.69422e-03   1.88514e-07   3.01956e-07   2.21878e-11
+
+final azimuth offset poly. coeff.:              0.00325  -3.86923e-07  -9.00255e-07   4.56139e-11
+final azimuth offset poly. coeff. errors:   3.45757e-03   2.41926e-07   3.87510e-07   2.84742e-11
+
+final model fit std. dev. (samples) range:   0.0657  azimuth:   0.0843
+
+binary culled offsets: ../data/tuples/20200911_20200923/fringe/displace.cpx
+updating ISP offset parameters: ../data/tuples/20200911_20200923/fringe/20200911_20200923.off
+
+user time (s):         0.000
+system time (s):       0.010
+elapsed time (s):      0.010
+

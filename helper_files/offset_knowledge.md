@@ -73,6 +73,8 @@
 parameter file and the line `offset_estimation_azimuth_samples`
 - Can't be bigger than the interferogram patch size `ISZ`, by default 16
 - When running the `offset_SLC`, the initial `.off`-file will be updated  
- 
+- WIth very small patches this programm searches for the maximum in Image Coherence
+- There need to be sufficient areas with at least some level of coherence
+
 
 

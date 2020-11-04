@@ -91,11 +91,30 @@ def enhance_offsets(slc1, slc1_par, slc2, slc2_par, off, out_cpx_offset_estimate
 
     out = subprocess.run(cmd1, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd1)
 
-    # write output to file
-    f = os.path.join(os.path.dirname(slc1), "fringe", "output_offset_slc.txt")
-    with open(f, "w") as src:
-        src.write(out.stdout.decode("UTF-8"))
+    # write output to file if there is out
+    if out:
+        f = os.path.join(os.path.dirname(slc1), "fringe", "output_offset_slc.txt")
+        with open(f, "w") as src:
+            src.write(out.stdout.decode("UTF-8"))
 
+    return None
+
+
+
+def offset_fit(offs, snr,  off, cpx_offsets, txt_offsets):
+
+    cmd = f"offset_fit {offs} {snr} {off} {cpx_offsets} {txt_offsets}"
+
+    out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+
+    # if there was some output
+    if out:
+        # write output to file
+        f = os.path.join(os.path.dirname(offs), "output_offset_fit.txt")
+        with open(f, "w") as src:
+            src.write(out.stdout.decode("UTF-8"))
+
+    return None
 
 
 def main():
@@ -131,17 +150,24 @@ def main():
         out_snr = os.path.join(path_method, datepair + ".snr")
         out_offsets_text = os.path.join(path_method, "cpx_offset.txt")
 
+        # paths for offset_fit
+        fit_coffs_cpx = os.path.join(path_method, "displace.cpx")
+        fit_coffs_txt = os.path.join(path_method, "displace.txt")
+
         # loop over all the steps
         for step in sorted(args.steps):
             if int(step) == 1:
                 # delete .off file if existing, initiate .off file with orbit inforamtion
                 # here the method off will be crated
+                print(TGREEN + "Creating offset parameter files: %s ..." % (datepair) + ENDC)
                 initiate_offset(rslc1_par, rslc2_par, method_off)
                 # here it will be updated
+                print(TGREEN + "Estimating inital offset parameters: %s ..." % (datepair) + ENDC)
                 enhance_offsets(rslc1, rslc1_par, rslc2, rslc2_par, method_off, out_cpx_offset_estimates,
                                 out_snr, out_offsets_text)
             elif int(step) == 2:
-                pass
+                print(TGREEN + "fitting bilinear registration offset polynomial: %s ... " % (datepair) + ENDC)
+                offset_fit(out_cpx_offset_estimates, out_snr, method_off, fit_coffs_cpx, fit_coffs_txt)
             elif int(step) == 3:
                 pass
             elif int(step) == 4:
