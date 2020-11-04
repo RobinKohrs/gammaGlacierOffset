@@ -114,7 +114,53 @@ def offset_fit(offs, snr,  off, cpx_offsets, txt_offsets):
         with open(f, "w") as src:
             src.write(out.stdout.decode("UTF-8"))
 
+        # get idea about the quality of the offsets
+        std_range, std_azimuth = offset_fit_output_stddev(f)
+        print(TYEL + f"Standard deviation estimate of the polynomial for range offset: {std_range:.3f}" + ENDC)
+        print(TYEL + f"Standard deviation estimate of the polynomial for range azimuth: {std_azimuth:.3f}" + ENDC)
+
     return None
+
+
+# Precise estimation of the offsets
+
+def offset_SLC_tracking(slc1, slc2, scl1_par, slc2_par, off, cpx_offsets, snr,
+                        range_window = "-", azimuth_window = "-", offsets_txt = "-", n_ovr = "-",
+                        thres = "-", rstep = "-", azstep="-", rstart = "-", azstart="-", azstop="-", isz="-"):
+    """
+    This time use some defaults in the function definition
+
+        input parameters:
+      SLC-1     (input) single-look complex image 1 (reference)
+      SLC-2     (input) single-look complex image 2
+      SLC1_par  (input) SLC-1 ISP image parameter file
+      SLC2_par  (input) SLC-2 ISP image parameter file
+      OFF_par   (input) ISP offset/interferogram parameter file
+      offs      (output) offset estimates (fcomplex)
+      snr       (output) offset estimation SNR (float)
+      rsw (wichtig)       range search window size (range pixels) (enter - for default from offset parameter file)
+      azsw (wichtig)     azimuth search window size (azimuth lines) (enter - for default from offset parameter file)
+      offsets   (output) range and azimuth offsets and SNR data in text format, enter - for no output
+      n_ovr (wichtig)    SLC over-sampling factor (integer 2**N (1,2,4) default: 2)
+      thres (set to low when tracking glaciers)    offset estimation quality threshold (enter - for default from offset parameter file)
+      rstep     step in range pixels (enter - for default: rsw/2)
+      azstep    step in azimuth pixels (enter - for default: azsw/2)
+      rstart    starting range pixel (enter - for default: rsw/2)
+      rstop     ending range pixel (enter - for default: nr - rsw/2)
+      azstart   starting azimuth line (enter - for default: azsw/2)
+      azstop    ending azimuth line  (enter - for default: nlines - azsw/2)
+      ISZ  (wichtig)     search chip interferogram size (in non-oversampled pixels, default: 16)
+      pflag     print flag:
+                  0: print offset summary  (default)
+                  1: print all offset data
+
+    :return:
+    """
+
+
+
+
+
 
 
 def main():
@@ -154,6 +200,10 @@ def main():
         fit_coffs_cpx = os.path.join(path_method, "displace.cpx")
         fit_coffs_txt = os.path.join(path_method, "displace.txt")
 
+        # paths for offset_SLC_tracking
+        offset_slc_tracking_estimates = os.path.join(path_method, "offset_slc_tracking_estimates.cpx")
+        offset_slc_snr_estimates = os.path.join(path_method, "offset_slc_snr_estimates.snr")
+
         # loop over all the steps
         for step in sorted(args.steps):
             if int(step) == 1:
@@ -165,11 +215,14 @@ def main():
                 print(TGREEN + "Estimating inital offset parameters: %s ..." % (datepair) + ENDC)
                 enhance_offsets(rslc1, rslc1_par, rslc2, rslc2_par, method_off, out_cpx_offset_estimates,
                                 out_snr, out_offsets_text)
+
             elif int(step) == 2:
                 print(TGREEN + "fitting bilinear registration offset polynomial: %s ... " % (datepair) + ENDC)
                 offset_fit(out_cpx_offset_estimates, out_snr, method_off, fit_coffs_cpx, fit_coffs_txt)
+
+
             elif int(step) == 3:
-                pass
+                offset_SLC_tracking(rslc1, rslc2, rslc1_par, rslc2_par, method_off, )
             elif int(step) == 4:
                 pass
             elif int(step) == 5:

@@ -155,6 +155,20 @@ def awkpy(file, pattern, col_to_extract):
             if [string for string in fields if pattern in string]:
                 return fields[col_to_extract-1]
 
+def offset_fit_output_stddev(file):
+    """
+    :param a text file that is the stddout from the function òffset_fit:
+    :return: a tuple with (<stddev_range>, <stddev_azimuth>)
+    """
+    with open(file, "r") as src:
+        lines = [line for line in src.readlines()]
+        for i in lines:
+            m = re.search("^final model.*range:\s*(\d\.\d+).*azimuth:\s*(\d\.\d+)", i)
+            if m is not None:
+                std_range= float(m.group(1))
+                std_azimuth = float(m.group(2))
+                return std_range, std_azimuth
+
 if __name__ == "__main__":
     #######################
     # Only for testing on the command line

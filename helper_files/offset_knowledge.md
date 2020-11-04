@@ -76,5 +76,16 @@ parameter file and the line `offset_estimation_azimuth_samples`
 - WIth very small patches this programm searches for the maximum in Image Coherence
 - There need to be sufficient areas with at least some level of coherence
 
+### Determine bilinear polynomial `offset_fit`
+
+
+# Precise estimation of the offsets `offset_SLC_tracking`
+
+- search window sizes must be powers of 2 (8, 16, 32 are recommended)
+- Some oversampling rates (1,2,4,8.. are recommended). Lower overesampling means less computation means less accuracy
+- The search-chip interferogram for non-oversampled pixels is deaulted to 16
+- Set low threshold for tracking glaciers
+
+
 
 
