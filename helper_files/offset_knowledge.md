@@ -110,8 +110,9 @@ größer als die Interferogram patch size
 
 - quadratische windows sizes (10/10) sind ok!! Und müssen eine 2er Pozenz sein
 - Der Threshold muss sehr klein sein
-- Die r_step und az_step sind quasi multilookfaktore und müssen beim plotten berücksichtig werden (range von 30 --> 827 pixeln, 120 --> 206...) 
+- Die r_step und az_step sind quasi multilookfaktore und müssen beim plotten berücksichtig werden (range von 30 --> 827 pixeln, 120 --> 206...)
+- Anscheinend können die Windowsizes gar nichts anderes außer rechteckig sein.... 
 4. offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 16 16 - - 0.01 30 6 - - - - -
 
-
+ offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 40 8 - - 0.01 30 6 1 827 1 2024 16
 
