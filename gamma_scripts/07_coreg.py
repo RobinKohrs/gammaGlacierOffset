@@ -55,7 +55,7 @@ def coreg(slc_dir, dem_dir, tuples_dir):
         out_dir = os.path.join(tuples_dir, date)
 
         # build cmd
-        cmd = f"ScanSAR_coreg.py {main_tab} {main_date} {second_tab} {second_date} {ref_tab} {main_hgt} 10 2 - - 0.8 0.01 0.8 --wdir {out_dir}"
+        cmd = f"ScanSAR_coreg.py {main_tab} {main_date} {second_tab} {second_date} {ref_tab} {main_hgt} 30 6 - - 0.8 0.01 0.8 --wdir {out_dir}"
 
         os.system(cmd) if not args.print else print(cmd)
 

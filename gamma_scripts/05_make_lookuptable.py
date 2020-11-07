@@ -14,10 +14,10 @@ import argparse
 # parse some arguments
 parser = argparse.ArgumentParser(description="")
 parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
-args =parser.parse_args()
+args = parser.parse_args()
 
 
-def create_lookup(slc_dir, oversampling, image="main"):
+def create_lookup(slc_dir, r_oversampling, az_oversampling, image="main"):
     # get the necessary files
     # important is to put mosaic in the file ending
     main_mli_slcs_pars = get_files(slc_dir, image=image, file_ending=["mosaic.mli.par"])
@@ -43,13 +43,14 @@ def create_lookup(slc_dir, oversampling, image="main"):
         ls_map = os.path.join(dem_dir, "ls_map")
 
         # build the cmd
-        cmd = f"gc_map {mosaic_mli_par} - {dem_par} {dem} {eqa_par} {eqa} {lookup_table} {oversampling} {oversampling} {inc} - - {ls_map} 8 2"
+        cmd = f"gc_map {mosaic_mli_par} - {dem_par} {dem} {eqa_par} {eqa} {lookup_table} {r_oversampling} {az_oversampling} {inc} - - {ls_map} 8 2"
         os.system(cmd) if not args.print else print(cmd)
 
 
 def main():
-    oversampling = 1
-    create_lookup(slc_dir, oversampling, image="main")
+    r_oversampling = 30
+    az_oversampling = 6
+    create_lookup(slc_dir, r_oversampling, az_oversampling, image="main")
 
 
 if __name__ == "__main__":
