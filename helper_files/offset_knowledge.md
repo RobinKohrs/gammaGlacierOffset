@@ -4,7 +4,7 @@
   images on the scale of the **used patches**
 - If there is a lot of coherece, the tracking can be performed with small patch sizes to an
   astonishing performance
-- Oversampling raster applied to the image patches increase the offset estimation accuracy
+- Oversampling rate applied to the image patches increase the offset estimation accuracy
 
 
 ## Three main steps
@@ -70,7 +70,7 @@
 ### Even more precise estimates of the offsets `offset_slc`
 
 - The range search window ,rwin, can either be set manually, or it takes the input from the offset
-parameter file and the line `offset_estimation_azimuth_samples`
+parameter file and the line `offset_estimation_range_samples`
 - Can't be bigger than the interferogram patch size `ISZ`, by default 16
 - When running the `offset_SLC`, the initial `.off`-file will be updated  
 - WIth very small patches this programm searches for the maximum in Image Coherence
@@ -86,6 +86,33 @@ parameter file and the line `offset_estimation_azimuth_samples`
 - The search-chip interferogram for non-oversampled pixels is deaulted to 16
 - Set low threshold for tracking glaciers
 
+---------------------------------
 
+# Important
 
+- Step sizes definieren die finale Auflösung und müssen gleich sein wie die MUltilookfaktoren
+- number of range offset samples 
+- SNR oder CCP können mit der der Anzahl an samples geplotted werden, da diese beiden Files sich nur innerhalb der 
+samples berechnet werden
+- Search Window Size (offset_estimation_window_width:) müssen ebenso unserem Multilook ration entsprechen
+- Range Steps and Anzimuth Steps müssen gleich sein wie unsere finale Auflösung! 
+- Die window breite und höhe sollte im gleichen Verhältnis sein, kann aber größer sein. Jedoch nicht 
+größer als die Interferogram patch size
+
+# SLC_tracking
+
+-------------------------------------------------------
+**Estimation in den lokalen Samples**
+1. create_offset 20200911.rslc.par 20200923.rslc.par out1.off 2
+2. offset_SLC 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs.cpx snr.snr 16 16 - - 60 60 0.01 16 -
+3. offset_fit offs.cpx snr.snr out1.off coffs.cpx 0.01 -
+------------------------------------------------------
+
+- quadratische windows sizes (10/10) sind ok!! Und müssen eine 2er Pozenz sein
+- Der Threshold muss sehr klein sein
+- Die r_step und az_step sind quasi multilookfaktore und müssen beim plotten berücksichtig werden (range von 30 --> 827 pixeln, 120 --> 206...)
+- Anscheinend können die Windowsizes gar nichts anderes außer rechteckig sein.... 
+4. offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 16 16 - - 0.01 30 6 - - - - -
+
+ offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 40 8 - - 0.01 30 6 1 827 1 2024 16
 

@@ -36,7 +36,7 @@ def initiate_offset(slc1_par, slc2_par, off):
         os.remove(off)
 
     # CREATE OFFSET
-    cmd1 = f"create_offset {slc1_par} {slc1_par} {off}"
+    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} 2"
     subprocess.run(cmd1, stdout=subprocess.PIPE, shell=True, input=override_input, encoding="ascii") if not args.print else print(cmd1)
 
     # INIT OFFSET ORBIT
@@ -125,7 +125,7 @@ def offset_fit(offs, snr,  off, cpx_offsets, txt_offsets):
 
 def offset_SLC_tracking(slc1, slc2, slc1_par, slc2_par, off, cpx_offsets, snr,
                         range_window = "-", azimuth_window = "-", offsets_txt = "-", n_ovr = "-",
-                        thres = "-", rstep = "-", azstep="-", rstart = "-", azstart="-", azstop="-", isz="-"):
+                        thres = "-", rstep = 30, azstep=6 , rstart = "-", azstart="-", azstop="-", isz="-"):
     """
     This time use some defaults in the function definition
 
