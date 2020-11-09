@@ -39,7 +39,7 @@ def geocode():
         dem_width = int(awkpy(eqa_dem_par, "width", 2))
         hgt_out = os.path.join(dem_dir, identifier + ".hgt")
 
-        # get the width of the mosaiced, munltilook mli
+        # get the width of the mosaiced, un-multilooked mli
         reg = identifier + ".mosaic.mli.par"
 
         # returns a list with

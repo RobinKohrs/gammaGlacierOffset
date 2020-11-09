@@ -12,10 +12,10 @@ import argparse
 parser = argparse.ArgumentParser(description="Multilooking parameter")
 # get positional arguments
 parser.add_argument("-r", "--range", dest="range",
-                    help="(input) looks in range (default = 10)", default=10, type=int)
+                    help="(input) looks in range (default = 30)", default=30, type=int)
 
 parser.add_argument("-a", "--azimuth", dest="azimuth",
-                    help="(input) looks in azimuth (default = 2)", default=2, type=int)
+                    help="(input) looks in azimuth (default = 6)", default=6, type=int)
 
 parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
 
