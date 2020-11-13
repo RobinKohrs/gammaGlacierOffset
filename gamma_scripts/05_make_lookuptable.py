@@ -48,8 +48,8 @@ def create_lookup(slc_dir, r_oversampling, az_oversampling, image="main"):
 
 
 def main():
-    r_oversampling = 30
-    az_oversampling = 6
+    r_oversampling = "-"
+    az_oversampling = "-"
     create_lookup(slc_dir, r_oversampling, az_oversampling, image="main")
 
 
