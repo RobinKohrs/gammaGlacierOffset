@@ -1,0 +1,20 @@
+ 2078  cp 20200923.rslc.par test/
+ 2079  ls
+ 2080  cd test/
+ 2081  create_offet
+ 2082  create_offset 
+ 2083  create_offset 20200911.rslc.par 20200923.rslc.par out1.off 2 10 2
+ 2084  create_offset
+ 2085  create_offset 20200911.rslc.par 20200923.rslc.par out1.off 2 10 2 0
+ 2086  ls
+ 2087  #offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 40 8 - - 0.01 30 6 1 827 1 2024 16
+ 2088  offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 40 8 - - 0.01 30 6 1 
+ 2089  offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 16 16 - - 0.01 30 6 1 
+ 2090  ls
+ 2091  cat out1.off 
+ 2092  dispwr offs_tracking.cpx 826
+ 2093  dispwr offs_tracking.cpx 1654
+ 2094  dispwr offs_tracking.cpx 1652
+ 2095  history | tail -n7
+ 2096  history | tail -n20
+ 2097  history | tail -n20 > it_worked.txt

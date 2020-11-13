@@ -116,3 +116,9 @@ größer als die Interferogram patch size
 
  offset_SLC_tracking 20200911.rslc 20200923.rslc 20200911.rslc.par 20200923.rslc.par out1.off offs_tracking.cpx snr_tracking.snr 40 8 - - 0.01 30 6 1 827 1 2024 16
 
+
+**11-10-2020**
+
+1. create_offset 20200911.rslc.par 20200923.slc.par out1.off 2 10 2 0
+
+2. ffset_SLC_tracking  20200911.rslc 20200923.slc 20200911.rslc.par 20200923.slc.par out1.off offs_direct_tracking.cpx snr_direct_tracking.snr 50 10 direct_offsets.txt 2 0.01 30 
