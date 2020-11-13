@@ -28,9 +28,9 @@ parser.add_argument("-s", "--step", dest="steps",
                          "optimise offsets (2)", default=[1],
                     nargs="+", type=int)
 
-parser.add_argument("-i", "--iters", dest="i",
-                    help="(input) is number of iterations performed as optimisation of the offset [int]",
-                    default=3, type=int)
+parser.add_argument("-w", "--windows", dest="windows",
+                    help="(input) bool if multiple patches should be produced or not [defaults False]",
+                    action="store_const", const=True)
 
 parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
 
@@ -43,6 +43,7 @@ if args.print:
 else:
     try:
         import py_gamma as pg
+
         print("\nGAMMA successfully installed")
     except ImportError as err:
         print("Working on the server...")
@@ -56,6 +57,7 @@ else:
 
 deramping = 1  # yes
 method = "intensity"
+
 
 #########################################
 # CREATING OFFSETS (actually belongs to another script
@@ -90,234 +92,71 @@ def initiate_offsets(slc1_par, slc2_par, off):
     sys.stdin = sysinput  # bring std input back
 
 
-    # print("=====")
-    # print("Initiating offsets with precise Sentinel-1 orbit information")
-    # print(TGREEN + "Orbit Reference Position" + ENDC)
-    # print("Range:", r_pos)
-    # print("Azimuth:", az_pos)
-    # print("=====\n")
-    #
-    # cmd2 = f"init_offset_orbit {slc1_par} {slc2_par} {off} {r_pos} {az_pos}"
-    #
-    # pg.init_offset_orbit(slc1_par, slc2_par, off, r_pos, az_pos) if not args.print else print(cmd2)
-    #
-    # print(f"Full initiation successful. \nOffset file: {off}.")
+def offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, oversampling):
+    # optimised by looping! -> in paper!
+    patch_rn = 512
+    patch_az = patch_rn / 5  # patches to be rectangular
+    samples_rn = 16
+    samples_az = 50  # many, because of the large water content in the upper area of the scenes
 
+    threshold = 0.1
 
-def reading_QA(QA):
-    # read IO output QA_temp
-    lines = QA.split(sep="\n")
+    print("=====")
+    print("Offset Optimisation for 'window size' & 'samples per window'")
+    print(TYEL + "Number Patches/Search Window:" + ENDC)
+    print(f"range: {patch_rn}; azimuth: {patch_az}")
+    print(TYEL + "Number Samples (evenly distributed over range and azimuth distance):" + ENDC)
+    print(f"range: {samples_rn}; azimuth: {samples_az}")
+    print("Threshold is set constant at {}".format(threshold))
+    print("=====")
 
-    # strip white space and \n
-    lst = [x.strip() for x in lines]
+    cmd1 = f"offset_pwr {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {qmf} {patch_rn} {patch_az} " \
+           f"- {oversampling} {samples_rn} {samples_az} {threshold} - - {deramping}"
 
-    # grep measurement statement (first match)
-    for line in lst:
-        if re.match("^final\smodel", line) is not None:
-            statement = line
-    # print(statement)
-
-    # grep range & azimuth model fit standard deviation
-    try:
-        sd_metric = re.findall("\d.\d*", statement)
-    except:
-        print(TRED + "QA_temp console output document not readable" + ENDC)
-
-    dict = {"range": sd_metric[0],
-            "azimuth": sd_metric[1]}
-    return (dict)
-
-
-def optimise_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
-    # delete QA file
-    if os.path.isfile(QA):
-        os.remove(QA)
-
-    # Metrics static ------
-    patch_rn, patch_az = 512, 102
-    samples_rn, samples_az = 18, 50
-
-    # Metrics looping -----
-    # Window size <- to be optimised
-    patches = [2 ** x for x in range(7, 11)]
-    patches = [512]
-
-    # Number of offset estimates, correlation function window size <- to be optimised
-    samples = [x ** 2 for x in range(8, 12)]
-    samples = [64]
-
-    threshold = 0.01  # from user guide
-    # thresholds = np.arange(0.1, 0.3, 0.05).tolist()
-
-    # round iteratively
-    # for i in enumerate(thresholds):
-    #     thresholds[i[0]] = round(i[1], 2)
-
-    # optimisation_dict = {iter : [rank, sizes, patches]}
-    optimisation = {}
-
-    # print number of prospected optimisation iterations
-    runs = len(list(itertools.product(*[patches, samples])))
-    print("Number of runs:", runs)
-
-    def dataframe_creation(optimisation):
-        """
-        wrangling optimisation dictionary to dataframe
-        """
-
-        # t rial zone
-        df = pd.DataFrame(optimisation.keys())
-        optimisation.values()
-
-        # TODO: Sanatise!
-        npatches = []
-        nsamples = []
-        nthresh = []
-        mean = []
-        for iters in optimisation.values():
-            metr = iters[3].values()
-            npatches.append(iters[0])
-            nsamples.append(iters[1])
-            nthresh.append(iters[2])
-            for i in metr:
-                lst_metr = list(i.values())
-
-                # calculating mean of metrics
-                i.update({"mean": round((float(lst_metr[0]) + float(lst_metr[1])) / 2, 4)})
-                mean.append(list(i.values())[2])
-
-        df.insert(1, "mean_sd", mean)
-        df.insert(2, "patches", npatches)
-        df.insert(3, "samples", nsamples)
-        df.insert(4, "threshold", nthresh)
-        print(df)
-
-        # sorting
-        df = df.sort_values(by=["mean_sd"], ascending=True)
-
-        # grep bestrun arguments
-        bestrun = df.iloc[0]
-        print("Best run: \n\n", bestrun)
-
-        return df
-
-    def looping(maxiter):
-
-        count = 0
-        for i, patch in enumerate(patches):
-            for j, sample in enumerate(samples):
-
-                print("Offset Optimisation for 'window size' & 'samples per window'")
-                print("Number Patches: {}".format(patch))
-                print("Number Samples: {}".format(sample))
-                print("Threshold is constant at {}".format(threshold))
-                print("=====")
-
-                cmd1 = f"offset_pwr {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {qmf} {patch_rn} {patch_az} " \
-                      f"- {oversampling} {samples_rn} {samples_az} {threshold} - - {deramping}"
-
-                cmd2 = f"offset_fit {reg} {qmf} {off} - -"
-
-                if not args.print:
-                    pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
-                                  patch_rn, patch_az, "-", oversampling, samples_rn, samples_az,
-                                  threshold, "-", "-", deramping)
-                else:
-                    print(cmd1)
-                    print(cmd2)
-                    return None
-
-                # store reference stdout
-                old_stdout = sys.stdout
-                result = StringIO()
-                sys.stdout = result
-
-                # offset fitting
-                print("=====")
-                print("Offset fitting")
-                print("=====")
-
-                # GAMMA
-                pg.offset_fit(reg, qmf, off, "-", "-")
-
-                # Redirect stdout back to screen
-                sys.stdout = old_stdout
-
-                # return value from stdout to file
-
-                out = result.getvalue()
-                qa_read = reading_QA(out)
-                # print("Metrics:", qa_read)
-
-                # update optimisation dictionary
-                optimisation[count] = [patch, sample, threshold, {"metrics": qa_read}]
-                print(optimisation)
-
-                out = dataframe_creation(optimisation)
-                # write metrics out as csv
-                out.to_csv(path_or_buf=QA)
-
-                count += 1
-                if count == maxiter:
-                    return None
-
-    # perform optimisation on patches, samples and threshold (more parameters can be added)
-    looping(maxiter=args.i)
-
-
-def final_fit_offsets(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, QA, oversampling):
-
-    # QA = "D:/Projects/gammaGlacierOffset/data/20200911_20200923.QA"
-    df = pd.read_csv(QA)
-
-    bestrun = df.iloc[0]
-    print("Optimising with the following parameters:")
-    print(bestrun)
-    print("\n\n")
-
-    patches = bestrun["patches"]
-    samples = bestrun["samples"]
-    threshold = bestrun["threshold"]
-
-    # GAMMA
-    cmd1 = f"offset_pwr {slc1} {slc2} {slc1_par} {slc2_par} {off} {reg} {qmf} {patches} {patches} - {oversampling} " \
-          f"{samples} {samples} {threshold} - - {deramping}"
     cmd2 = f"offset_fit {reg} {qmf} {off} - -"
+
     if not args.print:
-        # final offset estimation
-        print("=====")
-        print("Final optimisation")
-        print("=====\n\n")
-
         pg.offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf,
-                  patches, patches, "-", oversampling, samples, samples,
-                  threshold, "-", "-", deramping)
+                      patch_rn, patch_az, "-", oversampling, samples_rn, samples_az,
+                      threshold, "-", "-", deramping)
 
-        # final fitting
         print("=====")
         print("Offset fitting")
         print("=====")
-
         pg.offset_fit(reg, qmf, off, "-", "-")
+
     else:
         print(cmd1)
         print(cmd2)
+        return None
+
 
 def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_par):
     # Parameter setting
 
-    # window sizes in multi-look ratio, determines computation speed massively
-    rwin = 320
-    azwin = 64
+    if args.windows:
+        azwins = [2 ** x for x in range(3, 7)]
+        rwins = [x * 5 for x in azwins]  # multilook factor ratio of Sentinel-1
+    else:
+        rwin = 160
+        azwin = 32
 
+    ###### STEPS
     # multilook-faktoren (steps in range & azimuth) = samples!
-    rstep = 60
-    azstep = 12
-    oversampling = 2 # hopefully leverages the step sizes before to 30m resolution afterall
+    rstep = 30
+    azstep = 6
+
+    ##### OVERSAMPLING
+    oversampling = 1  # no influence on geometry! Not making displacement results better either...
 
     # mli parameter:
-    mli_width = int(awkpy(rmli1_par, "range_samples", 2)) # range 10 azimuth 2
-    mli_lines = int(awkpy(rmli1_par, "azimuth_lines", 2))
+    slc_width = int(awkpy(slc1_par, "range_samples", 2))  # range 30 azimuth 6
+    mli_width = int(awkpy(rmli1_par, "range_samples", 2))  # range 30 azimuth 6
+
+    print("Width of SLC:", slc_width)
+    print("Width of MLI:", mli_width)
+    print("Width of displacement map:", slc_width / rstep)
+    print("=====\n")
 
     # number of offsets
     # range: 827
@@ -335,25 +174,79 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_
     print("Offset Tracking")
     print("=====")
 
-    cmd = f"offset_pwr_tracking {slc1} {slc2} {slc1_par} {slc2_par} {off} {offset} {ccp} {rwin} {azwin} {offset_QA} " \
-          f"{oversampling} {threshold} {rstep} {azstep} {r_start} {r_end} {az_start} {az_end} - - " \
-          f"{deramping} {int_filter} 0 0 -"
+    if not args.windows:
 
-    if not args.print:
-        pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off,  # INPUT
-                           offset, ccp, rwin, azwin,  # offs, ccp, r_patch_size, a_patch_size -> from off
-                           offset_QA, oversampling,  # text offsets
-                           threshold,  # threshold -> from off
-                           rstep, azstep, r_start, r_end, az_start, az_end,  # starting and stopping pixel,
-                           "-", "-",  # lanczos interp, bandwidth
-                           deramping, int_filter,
-                           0, 0,  # printing
-                           "-")  # cross-correlation for each patch
-        print("=======")
-        print("Width of displacement map:", mli_width/rstep)
-        print("Wdith of MLI:", )
+        print("Azimuth Window:", azwin)
+        print("Range Window:", rwin)
+
+        cmd = f"offset_pwr_tracking {slc1} {slc2} {slc1_par} {slc2_par} {off} {offset} {ccp} {rwin} {azwin} {offset_QA} " \
+              f"{oversampling} {threshold} {rstep} {azstep} {r_start} {r_end} {az_start} {az_end} - - " \
+              f"{deramping} {int_filter} 0 0 -"
+
+        if not args.print:
+            pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off,  # INPUT
+                                   offset, ccp, rwin, azwin,
+                                   # offs, ccp, r_patch_size, a_patch_size -> from off
+                                   offset_QA, oversampling,  # text offsets
+                                   threshold,  # threshold -> from off
+                                   rstep, azstep, r_start, r_end, az_start, az_end,  # starting and stopping pixel,
+                                   "-", "-",  # lanczos interp, bandwidth
+                                   deramping, int_filter,
+                                   0, 0,  # printing
+                                   "-")  # cross-correlation for each patch
+            print("=======")
+
+        else:
+            print(cmd)
+
     else:
-        print(cmd)
+        print("using muliple window inputs  . . .")
+        for window in zip(azwins, rwins):
+
+            # ask if many window sizes are to be processed or just one
+
+            azwin = window[0]
+            rwin = window[1]
+
+            # naming addition for window sizes:
+            names_to_change = [offset, ccp, offset_QA]
+            names = []
+
+            for name in names_to_change:
+                end = name.split(sep=".")[-1]
+                front = name.split(sep=".")[0:-1]
+                front = ".".join(front)
+
+                full = f"{front}_{azwin}.{end}"
+                print(full)
+                names.append(full)
+
+            offset_patch = names[0]
+            ccp_patch = names[1]
+            offset_QA_patch = names[2]
+
+        print("Azimuth Window:", azwin)
+        print("Range Window:", rwin)
+
+        cmd = f"offset_pwr_tracking {slc1} {slc2} {slc1_par} {slc2_par} {off} {offset_patch} {ccp_patch} {rwin} {azwin} {offset_QA_patch} " \
+              f"{oversampling} {threshold} {rstep} {azstep} {r_start} {r_end} {az_start} {az_end} - - " \
+              f"{deramping} {int_filter} 0 0 -"
+
+        if not args.print:
+            pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off,  # INPUT
+                                   offset_patch, ccp_patch, rwin, azwin,
+                                   # offs, ccp, r_patch_size, a_patch_size -> from off
+                                   offset_QA_patch, oversampling,  # text offsets
+                                   threshold,  # threshold -> from off
+                                   rstep, azstep, r_start, r_end, az_start, az_end,  # starting and stopping pixel,
+                                   "-", "-",  # lanczos interp, bandwidth
+                                   deramping, int_filter,
+                                   0, 0,  # printing
+                                   "-")  # cross-correlation for each patch
+            print("=======")
+
+        else:
+            print(cmd)
 
 
 def displacements(offset, ccp, slc1_par, off, disp,
@@ -364,7 +257,7 @@ def displacements(offset, ccp, slc1_par, off, disp,
     print("=====")
 
     mode = 2  # ground range geometry
-    thresh = "-" # -> from .off file
+    thresh = 0.1  # or from .off file
 
     cmd = f"offset_tracking {offset} {ccp} {slc1_par} {off} {disp} - {mode} {thresh} -"
 
@@ -438,9 +331,9 @@ def main():
         offset = main_path + ".offset"
         ccp = main_path + ".ccp"  # cross-correlation for each patch
         disp = main_path + ".disp"
-        disp_real = main_path + ".disp_real"
-        disp_imag = main_path + ".disp_imag"
-        disp_ints = main_path + ".disp_ints"
+        disp_real = main_path + ".disp.real"
+        disp_imag = main_path + ".disp.imag"
+        disp_ints = main_path + ".disp.mag"
         out = main_path + ".temp_displacement_map.tif"
         offset_QA = main_path + ".offset_QA"
 
@@ -463,20 +356,17 @@ def main():
                 initiate_offsets(rslc1_par, rslc2_par, off)
             elif int(step) == 2:
                 # Optimise parameters patch size, sample number and threshold
-                optimise_offsets(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA, oversampling)
+                offset_pwr(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA)
             elif int(step) == 3:
-                # Fitting .off file with best result from optimisation procedure
-                final_fit_offsets(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA, oversampling)
-            elif int(step) == 4:
                 # Offset Tracking algorithm
                 tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, offset_QA, rmli1_par)
-            elif int(step) == 5:
+            elif int(step) == 4:
                 displacements(offset, ccp, rslc1_par, off, disp,
                               disp_real, disp_imag, disp_ints,
                               out, rmli1, rmli1_par)
             else:
                 pass
-        break
+
 
 if __name__ == '__main__':
     main()
