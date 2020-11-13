@@ -250,8 +250,8 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_
 
 
 def displacements(offset, ccp, slc1_par, off, disp,
-                  disp_real, disp_imag, disp_ints,
-                  out, rmli1, rmli1_par):
+                  disp_real, disp_imag, disp_mag,
+                  rmli1_par):
     print("=====")
     print("Displacement calculation")
     print("=====")
@@ -260,20 +260,16 @@ def displacements(offset, ccp, slc1_par, off, disp,
     thresh = 0.1  # or from .off file
 
     cmd = f"offset_tracking {offset} {ccp} {slc1_par} {off} {disp} - {mode} {thresh} -"
-
     pg.offset_tracking(offset, ccp, slc1_par, off, disp, "-", mode, thresh, "-") if not args.print else print(cmd)
 
     width = int(awkpy(rmli1_par, "range_samples", 2))
-    width = 620
     print("Width:", width)
 
-    # TODO: converting real, imaginary and magnitude to raster maps:
-    pg.cpx_to_real(disp, disp_real, width, 0)  #
-    pg.cpx_to_real(disp, disp_imag, width, 1)
-    pg.cpx_to_real(disp, disp_ints, width, 2)
+    width = 827
 
-    pg.raspwr(disp_real, width, "-", "-", "-", "-", "-", "-", "-", out)
-
+    pg.cpx_to_real(disp, disp_real, width, 0) # range displacements
+    pg.cpx_to_real(disp, disp_imag, width, 1) # azimuth displacements
+    pg.cpx_to_real(disp, disp_mag, width, 3) # both = magnitude
 
 def main():
     print("\n")
@@ -315,7 +311,7 @@ def main():
 
     for datepair in dict:
 
-        datepair = "20200911_20200923"
+        # datepair = "20200911_20200923"
         date1 = datepair[0:8]
         date2 = datepair[9:17]
 
@@ -333,7 +329,7 @@ def main():
         disp = main_path + ".disp"
         disp_real = main_path + ".disp.real"
         disp_imag = main_path + ".disp.imag"
-        disp_ints = main_path + ".disp.mag"
+        disp_mag = main_path + ".disp.mag"
         out = main_path + ".temp_displacement_map.tif"
         offset_QA = main_path + ".offset_QA"
 
@@ -362,11 +358,11 @@ def main():
                 tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, offset_QA, rmli1_par)
             elif int(step) == 4:
                 displacements(offset, ccp, rslc1_par, off, disp,
-                              disp_real, disp_imag, disp_ints,
-                              out, rmli1, rmli1_par)
+                              disp_real, disp_imag, disp_mag,
+                              rmli1_par)
             else:
                 pass
-
+        break
 
 if __name__ == '__main__':
     main()
