@@ -14,6 +14,10 @@ import itertools
 from functions import *
 import subprocess
 
+parser = argparse.ArgumentParser(description="Glacier Offset Tracking in 5 steps")
+# get positional arguments
+parser.add_argument("-p", "--print", metavar="", dest="print", help="only print cmd call", action="store_const", const=True)
+args = parser.parse_args()
 
 
 def get_all_files(dir):
@@ -37,7 +41,7 @@ def get_all_files(dir):
     return all_files
 
 
-def geocode_back(list_of_files):
+def geocode_back(list_of_files, dem_dir):
 
     """
     input parameters:
@@ -82,6 +86,11 @@ def geocode_back(list_of_files):
         date_main = date[0:8]
         mli = [os.path.join(basepath_strings,x) for x in os.listdir(basepath_strings) if date_main in x and x.endswith(".rmli.par")][0]
 
+        eqa_dem_par = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("EQA_dem.par") and date[0:8] in x][0]
+        eqa_dem_width = int(awkpy(eqa_dem_par, "width", 2))
+
+
+
         # in dem PDF S1_tracking nehmen sie die gleichen width_out width_in, die sie in geocode
         # verwenden um das DEM in die slant-range mli geometrie zu bringen
         # ich glaube, da wir für die Erstellung des MLI, als auch für range-steps u. azimuth-steps die gleiche Auflösung verwenden
@@ -89,6 +98,13 @@ def geocode_back(list_of_files):
         # gleich
 
         # die Input-breite denke ich können wir aus dem .off-file nehmen?!
+        off_file = [os.path.join(basepath_strings, "intensity", x) for x in os.listdir(os.path.join(basepath_strings, "intensity")) if x.endswith(".off")][0]
+        with open(off_file, "r") as src:
+            lines = [line for line in src.readlines()]
+            for l in lines:
+                res = re.search(r"^offset_estimation_range_samples:\s*(\d*)", l)
+                if res:
+                    range_samples = res.group(1)
 
         # die output breite und höhe
         with open(mli, "r") as src:
@@ -104,12 +120,46 @@ def geocode_back(list_of_files):
 
         # find lookup table
         dem_dir = "../data/DEM/"
-        lt = [file for file in os.listdir(dem_dir) if date_main in file and file.endswith(".lt")][0]
+        lt = [os.path.join(dem_dir, file) for file in os.listdir(dem_dir) if date_main in file and file.endswith(".lt")][0]
 
         # data out
         data_out = os.path.join(f + ".geo")
 
+        # build cmd
+        cmd = f"geocode_back {f} {range_samples} {lt} {data_out} {eqa_dem_width} " #{height_mli}
 
+        out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+
+
+
+def make_geotiffs(geofiles, dem_dir):
+    """
+      DEM_par  (input) DIFF/GEO DEM parameter file
+      data     (input) data file
+      type     data type:
+                 0: RASTER 8 or 24 bit uncompressed raster image, SUN (*.ras), BMP:(*.bmp), or TIFF: (*.tif)
+                 1: SHORT integer (2 bytes/value)
+                 2: FLOAT (4 bytes/value)
+                 3: SCOMPLEX (short complex, 4 bytes/value)
+                 4: FCOMPLEX (float complex, 8 bytes/value)
+                 5: BYTE
+      GeoTIFF  (output) GeoTIFF file (.tif i
+    """
+
+    for f in geofiles:
+        date = os.path.basename(f)[0:8]
+        intensity_dir = os.path.dirname(f)
+        try:
+            dem_par = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("EQA_dem.par") and date in x][0]
+            output_file = f + ".tif"
+
+            cmd = f"data2geotiff {f} {dem_par} 2 {output_file}"
+
+            out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+            if out:
+                print(out.stdout.decode("UTF-8"))
+        except:
+            print("SOME ERROR I DONT KNOW")
 
 
 
@@ -119,6 +169,7 @@ def main():
 
     # directories for all two data dependent files
     tuple_dir = "../data/tuples/"
+    dem_dir = "../data/DEM"
 
     # make a list of all fildes
     all_files = get_all_files(tuple_dir)
@@ -128,7 +179,15 @@ def main():
     files_to_geocode = [f for f in all_files if f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2])]
 
     # geocode_back
-    geocode_back(files_to_geocode)
+    #geocode_back(files_to_geocode, dem_dir=dem_dir)
+
+    # geocode all .geofiles
+    # find all geo files
+    file_endings = [".geo"]
+    geofiles_to_geocode = [f for f in all_files if f.endswith(file_endings[0])]
+
+    make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
+
 
 
 #--------------------------------------------------------------------------------
