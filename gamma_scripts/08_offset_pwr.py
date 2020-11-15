@@ -362,7 +362,6 @@ def main():
                               rmli1_par)
             else:
                 pass
-        break
 
 if __name__ == '__main__':
     main()
