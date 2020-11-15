@@ -36,7 +36,7 @@ def initiate_offset(slc1_par, slc2_par, off):
         os.remove(off)
 
     # CREATE OFFSET
-    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} 2"
+    cmd1 = f"create_offset {slc1_par} {slc1_par} {off} 2 10 2"
     subprocess.run(cmd1, stdout=subprocess.PIPE, shell=True, input=override_input, encoding="ascii") if not args.print else print(cmd1)
 
     # INIT OFFSET ORBIT
@@ -45,8 +45,8 @@ def initiate_offset(slc1_par, slc2_par, off):
 
     return None
 
-def enhance_offsets(slc1, slc1_par, slc2, slc2_par, off, out_cpx_offset_estimates,
-                    out_snr, out_offset_txt):
+def enhance_offsets(slc1, slc1_par, slc2, slc2_par, off, out_offset_txt, out_cpx_offset_estimates, out_snr):
+
     """
     This will run offset_SLC. Some of the output paramteres are defined in the function call. The other will be more
     flexible within the function
@@ -73,14 +73,14 @@ def enhance_offsets(slc1, slc1_par, slc2, slc2_par, off, out_cpx_offset_estimate
     """
 
     # range window
-    rwin = 10 #TODO: No idea, but must be smaller than the patchsize (which also should be small for fringe visibility??!!)
-    azwin = 2
+    rwin = 16 #TODO: No idea, but must be smaller than the patchsize (which also should be small for fringe visibility??!!)
+    azwin = 16
 
     # number of oversampling
     n_over = "-"
-    nr = "-"
-    naz = "-"
-    thres = "-"
+    nr = 60
+    naz = 60
+    thres = 0.01
     ISZ = "-" # Patchsize defaults to 16 and should be small, but can we maybe make bigger?
     pflag = 1
 
@@ -102,7 +102,7 @@ def enhance_offsets(slc1, slc1_par, slc2, slc2_par, off, out_cpx_offset_estimate
 
 def offset_fit(offs, snr,  off, cpx_offsets, txt_offsets):
 
-    cmd = f"offset_fit {offs} {snr} {off} {cpx_offsets} {txt_offsets}"
+    cmd = f"offset_fit {offs} {snr} {off} {cpx_offsets} {txt_offsets} 0.01"
 
     out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
 
@@ -124,8 +124,8 @@ def offset_fit(offs, snr,  off, cpx_offsets, txt_offsets):
 # Precise estimation of the offsets
 
 def offset_SLC_tracking(slc1, slc2, slc1_par, slc2_par, off, cpx_offsets, snr,
-                        range_window = "-", azimuth_window = "-", offsets_txt = "-", n_ovr = "-",
-                        thres = "-", rstep = 30, azstep=6 , rstart = "-", azstart="-", azstop="-", isz="-"):
+                        range_window = 16, azimuth_window = 16, offsets_txt = "-", n_ovr = "-",
+                        thres = 0.01, rstep = 30, azstep=6 , rstart = "-", azstart="-", azstop="-", isz="-"):
     """
     This time use some defaults in the function definition
 
@@ -207,8 +207,8 @@ def main():
         out_offsets_text = os.path.join(path_method, "cpx_offset.txt")
 
         # paths for offset_fit
-        fit_coffs_cpx = os.path.join(path_method, "displace.cpx")
-        fit_coffs_txt = os.path.join(path_method, "displace.txt")
+        fit_coffs_cpx = os.path.join(path_method, "coffs.cpx")
+        fit_coffs_txt = os.path.join(path_method, "coffs.txt")
 
         # paths for offset_SLC_tracking
         offset_slc_tracking_estimates = os.path.join(path_method, "offset_slc_tracking_estimates.cpx")
@@ -224,8 +224,7 @@ def main():
                 initiate_offset(rslc1_par, rslc2_par, method_off)
                 # here it will be updated
                 print(TGREEN + "Estimating inital offset parameters: %s ..." % (datepair) + ENDC)
-                enhance_offsets(rslc1, rslc1_par, rslc2, rslc2_par, method_off, out_cpx_offset_estimates,
-                                out_snr, out_offsets_text)
+                enhance_offsets(rslc1, rslc1_par, rslc2, rslc2_par, method_off, out_offsets_text, out_cpx_offset_estimates, out_snr)
 
             elif int(step) == 2:
                 print(TGREEN + "fitting bilinear registration offset polynomial: %s ... " % (datepair) + ENDC)

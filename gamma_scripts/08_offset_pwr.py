@@ -315,7 +315,7 @@ def main():
 
     for datepair in dict:
 
-        datepair = "20200911_20200923"
+        # datepair = "20200911_20200923"
         date1 = datepair[0:8]
         date2 = datepair[9:17]
 

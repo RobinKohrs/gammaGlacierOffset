@@ -121,4 +121,12 @@ größer als die Interferogram patch size
 
 1. create_offset 20200911.rslc.par 20200923.slc.par out1.off 2 10 2 0
 
-2. ffset_SLC_tracking  20200911.rslc 20200923.slc 20200911.rslc.par 20200923.slc.par out1.off offs_direct_tracking.cpx snr_direct_tracking.snr 50 10 direct_offsets.txt 2 0.01 30 
+2. offset_SLC_tracking  20200911.rslc 20200923.slc 20200911.rslc.par 20200923.slc.par out1.off offs_direct_tracking.cpx snr_direct_tracking.snr 50 10 direct_offsets.txt 2 0.01 30
+
+
+**Winter**
+
+1. create_offset 20200103.rslc.par 20200115.rslc.par 2 10 2 0 
+2. offset_SLC 20200103.rslc 20200115.rslc 20200103.rslc.par 20200115.rslc.par out1.off offs.cpx snr.snr 16 16 - - 60 60 0.01 16 -
+3. offset_fit offs.cpx snr.snr out1.off coffs.cpx 0.01 -
+
