@@ -82,12 +82,25 @@ def geocode_back(list_of_files):
         date_main = date[0:8]
         mli = [os.path.join(basepath_strings,x) for x in os.listdir(basepath_strings) if date_main in x and x.endswith(".rmli.par")][0]
 
+        # in dem PDF S1_tracking nehmen sie die gleichen width_out width_in, die sie in geocode
+        # verwenden um das DEM in die slant-range mli geometrie zu bringen
+        # ich glaube, da wir für die Erstellung des MLI, als auch für range-steps u. azimuth-steps die gleiche Auflösung verwenden
+        # (30,60) sind die Input-Width (bestimmt durch die range/az steps) und die output-widht (bestimmt durch die MLI-breite und HÖHE)
+        # gleich
+
+        # die Input-breite denke ich können wir aus dem .off-file nehmen?!
+
+        # die output breite und höhe
         with open(mli, "r") as src:
             lines = [line for line in src.readlines()]
             for i in lines:
-                m = re.search("^range_samples:\s*(\d*)", i)
-                if m is not None:
-                     width_mli = m.group(1)
+                w = re.search("^range_samples:\s*(\d*)", i)
+                if w is not None:
+                    width_mli = w.group(1)
+
+                h = re.search("^azimuth_lines:\s*(\d*)", i)
+                if h is not None:
+                    height_mli = h.group(1)
 
         # find lookup table
         dem_dir = "../data/DEM/"
@@ -96,7 +109,9 @@ def geocode_back(list_of_files):
         # data out
         data_out = os.path.join(f + ".geo")
 
-        # width out
+
+
+
 
 
 
@@ -116,11 +131,7 @@ def main():
     geocode_back(files_to_geocode)
 
 
-
-
-
-
-
-
+#--------------------------------------------------------------------------------
 if __name__ == "__main__":
     main()
+#--------------------------------------------------------------------------------
