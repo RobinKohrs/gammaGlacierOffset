@@ -10,12 +10,8 @@
 # vector geometries
 # ./ vector_geometry / glacier.gpkg
 
-
-
-
-
 # load packages
-packages = c("tidyverse", "raster", "sf", "exactextractr", "stringr", "data.table")
+packages = c("tidyverse", "raster", "sf", "exactextractr", "stringr", "data.table", "RColorBrewer")
 lapply(packages, require, character.only = TRUE)
 
 # CREATE PATHS -----------------------------
@@ -27,18 +23,46 @@ if (!dir.exists(plotdir)) dir.create(recursive = TRUE)
 # glacier vectors
 path_sf = "./vector_geometry/glacier.gpkg"
 sf = st_read(path_sf, layer = "parts")
+extent = st_read(path_sf, layer = "crop_extent")
+extent_only_glacier = st_read(path_sf, layer = "crop_onlyglacier")
 
 # displacement data gomez et al.
-dir_gomez = "./data/disp_gomez"
-files = list.files(dir_gomez, pattern = ".tif$", full.names = TRUE)
+dir_gom = "./data/disp_gomez"
+files_gom = list.files(dir_gom, pattern = ".tif$", full.names = TRUE)
 
-# stacking
-gom = stack(files)
+# out displacement data with GAMMA software
+dir_disp = "./results"
+files_disp = list.files(dir_disp, pattern = "\\.mag.geo_32627.tif$", full.names = TRUE)
 
 # check for crs
 if (!as.character(crs(gom)) == as.character(crs(sf))) stop()
 
 # RASTER PREPROCESSING -----------------------------
+
+# stacking
+gom = stack(files_gom)
+#disp = stack(files_disp)
+
+# creating dummy to refer on:
+dummy = raster(crs = "+proj=utm +zone=27 +datum=WGS84 +units=m +no_defs",
+               res = c(30, 30), ext = raster::extent(extent_only_glacier))
+
+# crop all disp to extent
+disps = map(files_disp, function(x){
+  raster(x) %>%
+      resample(dummy)
+})
+
+# stacking
+stk = stack(disps)
+
+# subsetting
+stk[stk < 2] = NA
+stk[stk > 20] = NA
+
+
+# NAMING
+# test stringr if they match...
 
 # assign dates to raster bands
 pairs = names(gom) %>%
@@ -87,6 +111,8 @@ transformation = function(exact_extract_output){
     dplyr::select(c(-dates)) %>%
     dplyr::select(c(start, subset, observation)) %>%
     arrange(start)
+
+  return(tidy)
 }
 
 extraction_gomez = exact_extract(gom, sf, "mean")
@@ -94,7 +120,27 @@ extraction_gomez = exact_extract(gom, sf, "mean")
 
 gomez = transformation(extraction_gomez)
 
-# VISUALISATION -----------------------------
+# VISUALISATION to be outsourced! -----------------------------
+
+colr <- colorRampPalette(brewer.pal(9, 'Blues'))
+# quick viz
+rasterVis::levelplot(stk,
+          margin=FALSE,
+          colorkey=list(
+            space='bottom',
+            labels=list(at=0:20, font=4),
+            axis.line=list(col='black'),
+            width=0.75
+          ),
+          par.settings=list(
+            strip.border=list(col='transparent'),
+            strip.background=list(col='transparent'),
+            axis.line=list(col='transparent')
+          ),
+          scales=list(draw=FALSE),
+          col.regions=colr,
+          at=seq(0, 20, len=101),
+          names.attr=rep('', nlayers(stk)))
 
 gg = ggplot(gomez) +
   geom_point(aes(start, observation, group = subset), color = "grey15")+

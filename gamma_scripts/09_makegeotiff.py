@@ -161,7 +161,12 @@ def make_geotiffs(geofiles, dem_dir):
             print("SOME ERROR I DONT KNOW")
 
 
-def transform(geotiffs, results):
+def transform(geotiffs, results, tuple_dir):
+    
+    # handle deleter with care
+    deleter = f"find {tuple_dir} -name *32627* | xargs rm"
+    subprocess.run(deleter, shell=True) if not args.print else print("no deletion of files.")
+    
     for geotiff in geotiffs:
         
         # get only the directory
@@ -182,8 +187,11 @@ def transform(geotiffs, results):
         out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
 
         # copy data to results folder: easier to copy
-        print(f"copying {output} to {results}\n")
-        shutil.copy(output, results) if not args.print else print("not copying . . .")
+        if not args.print:
+            print(f"copying {output} to {results}")
+            shutil.copy(output, results)
+        else:
+            print("not copying . . .")
         
         if out:
             print(out.stdout.decode("UTF-8"))
@@ -218,12 +226,8 @@ def main():
     
     # find all geotiffs
     geotiffs_to_copy = [f for f in all_files if f.endswith(".tif")]
-
-    # handle deleter with care
-    deleter = f"find {tuple_dir} -name *32627* | xargs rm"
-    subprocess.run(deleter, shell=True)
-    
-    transform(geotiffs_to_copy, results)
+ 
+    transform(geotiffs_to_copy, results, tuple_dir)
     
 
 # --------------------------------------------------------------------------------
