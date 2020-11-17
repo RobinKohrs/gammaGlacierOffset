@@ -153,7 +153,7 @@ def make_geotiffs(geofiles, dem_dir):
             dem_par = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("EQA_dem.par") and date in x][0]
             output_file = f + ".tif"
 
-            cmd = f"data2geotiff {f} {dem_par} 2 {output_file}"
+            cmd = f"data2geotiff {dem_par} {f} 2 {output_file}"
 
             out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
             if out:
@@ -162,7 +162,28 @@ def make_geotiffs(geofiles, dem_dir):
             print("SOME ERROR I DONT KNOW")
 
 
+def transform(geotiffs):
+    for geotiff in geotiffs:
 
+        # get only the directory
+        base_dir = os.path.dirname(geotiff)
+
+        # basenmae is just the name of the file without the directory information
+        basename = os.path.basename(geotiff)
+        basename_split = basename.split(".")
+        sep = "."
+        new_name = sep.join(basename_split[0:4]) + "_32627" ".tif"
+
+        # assemble the name
+        output = os.path.join(base_dir, new_name)
+        print(output)
+
+        # gdalwarp
+        cmd = f"gdalwarp -t_srs EPSG: 32627 {geotiff} {output}"
+        out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+
+        if out:
+            print(out.stdout.decode("UTF-8"))
 
 
 def main():
@@ -186,7 +207,11 @@ def main():
     file_endings = [".geo"]
     geofiles_to_geocode = [f for f in all_files if f.endswith(file_endings[0])]
 
-    make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
+    # make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
+
+    # find all geotiffs
+    geotiffs_to_copy = [f for f in all_files if f.endswith(".tif")]
+    transform(geotiffs_to_copy)
 
 
 

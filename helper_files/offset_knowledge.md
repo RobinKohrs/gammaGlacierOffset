@@ -130,3 +130,9 @@ größer als die Interferogram patch size
 2. offset_SLC 20200103.rslc 20200115.rslc 20200103.rslc.par 20200115.rslc.par out1.off offs.cpx snr.snr 16 16 - - 60 60 0.01 16 -
 3. offset_fit offs.cpx snr.snr out1.off coffs.cpx 0.01 -
 
+
+# Things that relate
+
+- the `eqa_dem` is a dem 
+
+- We can plot the the look-up table with the width from the eqa.dem_par file
