@@ -5,15 +5,11 @@
 # Window Size Refinement loops
 #########################################
 
-import os
-import re
 import argparse
-import sys
-from io import StringIO
-import itertools
-from functions import *
-import subprocess
 import shutil
+import subprocess
+
+from functions import *
 
 parser = argparse.ArgumentParser(description="Glacier Offset Tracking in 5 steps")
 # get positional arguments
@@ -207,19 +203,19 @@ def main():
                         f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2])]
     
     # geocode_back
-    # geocode_back(files_to_geocode, dem_dir=dem_dir)
+    geocode_back(files_to_geocode, dem_dir=dem_dir)
     
     # geocode all .geofiles
     # find all geo files
     file_endings = [".geo"]
     geofiles_to_geocode = [f for f in all_files if f.endswith(file_endings[0])]
     
-    # make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
+    make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
     
     # find all geotiffs
     geotiffs_to_copy = [f for f in all_files if f.endswith(".tif")]
     
-    # transform(geotiffs_to_copy)
+    transform(geotiffs_to_copy)
     
     # copy data to results folder: easier to copy
     for file in geotiffs_to_copy:
