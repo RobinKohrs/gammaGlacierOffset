@@ -13,36 +13,36 @@ from io import StringIO
 import itertools
 from functions import *
 import subprocess
+import shutil
 
 parser = argparse.ArgumentParser(description="Glacier Offset Tracking in 5 steps")
 # get positional arguments
-parser.add_argument("-p", "--print", metavar="", dest="print", help="only print cmd call", action="store_const", const=True)
+parser.add_argument("-p", "--print", metavar="", dest="print", help="only print cmd call", action="store_const",
+                    const=True)
 args = parser.parse_args()
 
 
 def get_all_files(dir):
-
     # all top_level_directories
     all_dirs = os.listdir(dir)
     all_files = []
-
+    
     # for all top level directories
     for j in all_dirs:
-
+        
         # build the full path
         full_path = os.path.join(dir, j)
-
+        
         # if its a directory
         if os.path.isdir(full_path):
             all_files = all_files + get_all_files(full_path)
         else:
             all_files.append(full_path)
-
+    
     return all_files
 
 
 def geocode_back(list_of_files, dem_dir):
-
     """
     input parameters:
   data_in       (input) data file (format as specified by format_flag parameter)
@@ -76,36 +76,38 @@ def geocode_back(list_of_files, dem_dir):
                   1: extrapolate up to 0.5 pixels beyond input edges
 
     """
-
+    
     for f in list_of_files:
-
+        
         # find mli width
         f_basepath_list = os.path.dirname(f).split("/")[:-1]
         basepath_strings = "/".join(f_basepath_list)
         date = basepath_strings.split("/")[-1]
         date_main = date[0:8]
-        mli = [os.path.join(basepath_strings,x) for x in os.listdir(basepath_strings) if date_main in x and x.endswith(".rmli.par")][0]
-
-        eqa_dem_par = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("EQA_dem.par") and date[0:8] in x][0]
+        mli = [os.path.join(basepath_strings, x) for x in os.listdir(basepath_strings) if
+               date_main in x and x.endswith(".rmli.par")][0]
+        
+        eqa_dem_par = \
+        [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("EQA_dem.par") and date[0:8] in x][0]
         eqa_dem_width = int(awkpy(eqa_dem_par, "width", 2))
-
-
-
+        
         # in dem PDF S1_tracking nehmen sie die gleichen width_out width_in, die sie in geocode
         # verwenden um das DEM in die slant-range mli geometrie zu bringen
         # ich glaube, da wir für die Erstellung des MLI, als auch für range-steps u. azimuth-steps die gleiche Auflösung verwenden
         # (30,60) sind die Input-Width (bestimmt durch die range/az steps) und die output-widht (bestimmt durch die MLI-breite und HÖHE)
         # gleich
-
+        
         # die Input-breite denke ich können wir aus dem .off-file nehmen?!
-        off_file = [os.path.join(basepath_strings, "intensity", x) for x in os.listdir(os.path.join(basepath_strings, "intensity")) if x.endswith(".off")][0]
+        off_file = \
+        [os.path.join(basepath_strings, "intensity", x) for x in os.listdir(os.path.join(basepath_strings, "intensity"))
+         if x.endswith(".off")][0]
         with open(off_file, "r") as src:
             lines = [line for line in src.readlines()]
             for l in lines:
                 res = re.search(r"^offset_estimation_range_samples:\s*(\d*)", l)
                 if res:
                     range_samples = res.group(1)
-
+        
         # die output breite und höhe
         with open(mli, "r") as src:
             lines = [line for line in src.readlines()]
@@ -113,23 +115,23 @@ def geocode_back(list_of_files, dem_dir):
                 w = re.search("^range_samples:\s*(\d*)", i)
                 if w is not None:
                     width_mli = w.group(1)
-
+                
                 h = re.search("^azimuth_lines:\s*(\d*)", i)
                 if h is not None:
                     height_mli = h.group(1)
-
+        
         # find lookup table
         dem_dir = "../data/DEM/"
-        lt = [os.path.join(dem_dir, file) for file in os.listdir(dem_dir) if date_main in file and file.endswith(".lt")][0]
-
+        lt = \
+        [os.path.join(dem_dir, file) for file in os.listdir(dem_dir) if date_main in file and file.endswith(".lt")][0]
+        
         # data out
         data_out = os.path.join(f + ".geo")
-
+        
         # build cmd
-        cmd = f"geocode_back {f} {range_samples} {lt} {data_out} {eqa_dem_width} " #{height_mli}
-
+        cmd = f"geocode_back {f} {range_samples} {lt} {data_out} {eqa_dem_width} "  # {height_mli}
+        
         out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
-
 
 
 def make_geotiffs(geofiles, dem_dir):
@@ -145,16 +147,17 @@ def make_geotiffs(geofiles, dem_dir):
                  5: BYTE
       GeoTIFF  (output) GeoTIFF file (.tif i
     """
-
+    
     for f in geofiles:
         date = os.path.basename(f)[0:8]
         intensity_dir = os.path.dirname(f)
         try:
-            dem_par = [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("EQA_dem.par") and date in x][0]
+            dem_par = \
+            [os.path.join(dem_dir, x) for x in os.listdir(dem_dir) if x.endswith("EQA_dem.par") and date in x][0]
             output_file = f + ".tif"
-
+            
             cmd = f"data2geotiff {dem_par} {f} 2 {output_file}"
-
+            
             out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
             if out:
                 print(out.stdout.decode("UTF-8"))
@@ -164,58 +167,67 @@ def make_geotiffs(geofiles, dem_dir):
 
 def transform(geotiffs):
     for geotiff in geotiffs:
-
+        
         # get only the directory
         base_dir = os.path.dirname(geotiff)
-
+        
         # basenmae is just the name of the file without the directory information
         basename = os.path.basename(geotiff)
         basename_split = basename.split(".")
         sep = "."
         new_name = sep.join(basename_split[0:4]) + "_32627" ".tif"
-
+        
         # assemble the name
         output = os.path.join(base_dir, new_name)
         print(output)
-
+        
         # gdalwarp
-        cmd = f"gdalwarp -t_srs EPSG: 32627 {geotiff} {output}"
+        cmd = f"gdalwarp -t_srs EPSG:32627 {geotiff} {output}"
         out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
-
+        
         if out:
             print(out.stdout.decode("UTF-8"))
 
 
 def main():
-
     # directories for all two data dependent files
     tuple_dir = "../data/tuples/"
     dem_dir = "../data/DEM"
-
+    results = "../results"
+    
+    if not os.path.exists(results):
+        os.mkdir(results)
+    
     # make a list of all fildes
     all_files = get_all_files(tuple_dir)
-
+    
     # filter the files you want
     file_endings = [".imag", ".real", ".mag"]
-    files_to_geocode = [f for f in all_files if f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2])]
-
+    files_to_geocode = [f for f in all_files if
+                        f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2])]
+    
     # geocode_back
-    #geocode_back(files_to_geocode, dem_dir=dem_dir)
-
+    # geocode_back(files_to_geocode, dem_dir=dem_dir)
+    
     # geocode all .geofiles
     # find all geo files
     file_endings = [".geo"]
     geofiles_to_geocode = [f for f in all_files if f.endswith(file_endings[0])]
-
+    
     # make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
-
+    
     # find all geotiffs
     geotiffs_to_copy = [f for f in all_files if f.endswith(".tif")]
-    transform(geotiffs_to_copy)
+    
+    # transform(geotiffs_to_copy)
+    
+    # copy data to results folder: easier to copy
+    for file in geotiffs_to_copy:
+        print(f"copying {file} to {results}\n")
+        shutil.copy(file, results)
 
 
-
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
 if __name__ == "__main__":
     main()
-#--------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------
