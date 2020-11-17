@@ -161,7 +161,7 @@ def make_geotiffs(geofiles, dem_dir):
             print("SOME ERROR I DONT KNOW")
 
 
-def transform(geotiffs):
+def transform(geotiffs, results):
     for geotiff in geotiffs:
         
         # get only the directory
@@ -180,6 +180,10 @@ def transform(geotiffs):
         # gdalwarp
         cmd = f"gdalwarp -t_srs EPSG:32627 {geotiff} {output}"
         out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+
+        # copy data to results folder: easier to copy
+        print(f"copying {output} to {results}\n")
+        shutil.copy(output, results) if not args.print else print("not copying . . .")
         
         if out:
             print(out.stdout.decode("UTF-8"))
@@ -203,25 +207,24 @@ def main():
                         f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2])]
     
     # geocode_back
-    geocode_back(files_to_geocode, dem_dir=dem_dir)
+    # geocode_back(files_to_geocode, dem_dir=dem_dir)
     
     # geocode all .geofiles
     # find all geo files
     file_endings = [".geo"]
     geofiles_to_geocode = [f for f in all_files if f.endswith(file_endings[0])]
     
-    make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
+    # make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
     
     # find all geotiffs
     geotiffs_to_copy = [f for f in all_files if f.endswith(".tif")]
-    
-    transform(geotiffs_to_copy)
-    
-    # copy data to results folder: easier to copy
-    for file in geotiffs_to_copy:
-        print(f"copying {file} to {results}\n")
-        shutil.copy(file, results)
 
+    # handle deleter with care
+    deleter = f"find {tuple_dir} -name *32627* | xargs rm"
+    subprocess.run(deleter, shell=True)
+    
+    transform(geotiffs_to_copy, results)
+    
 
 # --------------------------------------------------------------------------------
 if __name__ == "__main__":

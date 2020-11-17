@@ -5,14 +5,9 @@
 # Window Size Refinement loops
 #########################################
 
-import os
-import re
 import argparse
 import sys
 from io import StringIO
-import pandas as pd
-import numpy as np
-import itertools
 
 from functions import *
 
@@ -25,7 +20,7 @@ parser = argparse.ArgumentParser(description="Glacier Offset Tracking in 5 steps
 # get positional arguments
 parser.add_argument("-s", "--step", dest="steps",
                     help="(input) initiate offset file with parameter file and orbit information (1),"
-                         "optimise offsets (2)", default=[1],
+                         "optimise offsets (2)", default=[0],
                     nargs="+", type=int)
 
 parser.add_argument("-w", "--windows", dest="windows",
@@ -34,9 +29,14 @@ parser.add_argument("-w", "--windows", dest="windows",
 
 parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
 
+parser.add_argument("-t", "--threshold", dest="thresh",
+                    help="(input) threshold of cross-correlation which displacements are to be included",
+                    default=[0.01], type=float)
+
 # get the arguments
 global args
 args = parser.parse_args()
+
 
 if args.print:
     print("working locally...")
@@ -82,7 +82,6 @@ def initiate_offsets(slc1_par, slc2_par, off):
     sysinput = sys.stdin  # save std input
     f = StringIO(override_input)  # override input 7x
     sys.stdin = f
-    print(sys.stdin)
 
     cmd1 = f"create_offset {slc1_par} {slc1_par} {off} 1"
 
@@ -99,10 +98,9 @@ def offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, oversampling):
     samples_rn = 16
     samples_az = 50  # many, because of the large water content in the upper area of the scenes
 
-    threshold = 0.1
+    threshold = args.thresh[0]
 
     print("=====")
-    print("Offset Optimisation for 'window size' & 'samples per window'")
     print(TYEL + "Number Patches/Search Window:" + ENDC)
     print(f"range: {patch_rn}; azimuth: {patch_az}")
     print(TYEL + "Number Samples (evenly distributed over range and azimuth distance):" + ENDC)
@@ -133,6 +131,13 @@ def offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, oversampling):
 
 def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_par):
     # Parameter setting
+    
+    print("\n")
+    print("=====")
+    print(TYEL + "Processing with method:" + ENDC)
+    print(TYEL + method + ENDC)
+    print("=====")
+    print("\n")
 
     if args.windows:
         azwins = [2 ** x for x in range(3, 7)]
@@ -168,7 +173,7 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_
     r_end = "-"  # 13000
 
     int_filter = 1  # only when oversample = 1
-    threshold = 0.1
+    threshold = args.thresh[0]
 
     print("=====")
     print("Offset Tracking")
@@ -257,7 +262,7 @@ def displacements(offset, ccp, slc1_par, off, disp,
     print("=====")
 
     mode = 2  # ground range geometry
-    thresh = 0.1  # or from .off file
+    thresh = args.thresh[0]  # or from .off file
 
     cmd = f"offset_tracking {offset} {ccp} {slc1_par} {off} {disp} - {mode} {thresh} -"
     pg.offset_tracking(offset, ccp, slc1_par, off, disp, "-", mode, thresh, "-") if not args.print else print(cmd)
@@ -272,17 +277,7 @@ def displacements(offset, ccp, slc1_par, off, disp,
     pg.cpx_to_real(disp, disp_mag, width, 3) # both = magnitude
 
 def main():
-    print("\n")
-    print("=====")
-    print(TYEL + "Processing with method:" + ENDC)
-    print(TYEL + method + ENDC)
-    print("=====")
-    print("\n")
 
-    # TODO: Add -p argument for every step
-
-    # TODO: Init_offset_orbit bei auch koregistrierte SLCs?
-    # TODO: Significance of oversampling factors
 
     # Folder Structure:
     #     | DEM
@@ -301,13 +296,9 @@ def main():
     # USER INPUT #######################
     slc_dir = "../data/SLC"
     tuples_dir = "../data/tuples/"
-    oversampling = 2  # what does that actually mean? Is this to be set globally?
 
     # specify ending of file to be used as basename giver
     dict = file_dict(slc_dir=slc_dir, ending=".mosaic_slc")
-
-    # print(dict)
-    # dict = {'20200911_20200923': {'20200911': ['20200911_vv_iw2.slc', '20200911_vv_iw2.slc.par'], '20200923': ['20200923_vv_iw2.slc.par', '20200923_vv_iw2.slc']}}
 
     for datepair in dict:
 
@@ -330,7 +321,6 @@ def main():
         disp_real = main_path + ".disp.real"
         disp_imag = main_path + ".disp.imag"
         disp_mag = main_path + ".disp.mag"
-        out = main_path + ".temp_displacement_map.tif"
         offset_QA = main_path + ".offset_QA"
 
         # fetching SLCs
@@ -342,7 +332,6 @@ def main():
         rslc1_par = [os.path.join(tuple, x) for x in rslcs_par if date1 in x][0]
         rslc2_par = [os.path.join(tuple, x) for x in rslcs_par if date2 in x][0]
 
-        rmli1 = [os.path.join(tuple, rmli) for rmli in os.listdir(tuple) if rmli.endswith(".rmli")][0]
         rmli1_par = [os.path.join(tuple, rmli) for rmli in os.listdir(tuple) if rmli.endswith(".rmli.par")][0]
 
         # looping through steps indicated by input -s, adding possible -> e.g. `-s 1 2 3 4 5`
@@ -351,12 +340,13 @@ def main():
                 # delete .off file if existing, initiate .off file with orbit inforamtion
                 initiate_offsets(rslc1_par, rslc2_par, off)
             elif int(step) == 2:
-                # Optimise parameters patch size, sample number and threshold
+                # Using moving windows for optimising the polynomial function
                 offset_pwr(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA)
             elif int(step) == 3:
                 # Offset Tracking algorithm
                 tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, offset_QA, rmli1_par)
             elif int(step) == 4:
+                # Calculating actual displacements
                 displacements(offset, ccp, rslc1_par, off, disp,
                               disp_real, disp_imag, disp_mag,
                               rmli1_par)
