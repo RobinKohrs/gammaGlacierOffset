@@ -35,12 +35,12 @@ dir_disp = "./results"
 files_disp = list.files(dir_disp, pattern = "\\.mag.geo_32627.tif$", full.names = TRUE)
 
 # check for crs
-if (!as.character(crs(gom)) == as.character(crs(sf))) stop()
+#if (!as.character(crs(raster(files_disp[1]))) == as.character(crs(sf))) stop()
 
 # RASTER PREPROCESSING -----------------------------
 
 # stacking
-gom = stack(files_gom)
+
 #disp = stack(files_disp)
 
 # creating dummy to refer on:
@@ -53,15 +53,18 @@ disps = map(files_disp, function(x){
       resample(dummy)
 })
 
+goms = map(files_gom, function (x){
+    raster(x) %>%
+        resample(dummy)
+})
+
 # stacking
-stk = stack(disps)
-
-# subsetting
-stk[stk < 2] = NA
-stk[stk > 20] = NA
+gom = stack(goms)
+disp = stack(disps)
 
 
-# NAMING
+
+# NAMING -----------------------------
 # test stringr if they match...
 
 # assign dates to raster bands
@@ -94,7 +97,7 @@ colnames(pairs_df) = c("start", "end")
 # EXTRACTION -----------------------------
 # for now, exatraction of all gomez displacements, no matter what
 
-transformation = function(exact_extract_output){
+tidying = function(exact_extract_output){
   # makes a tidy dataframe from exactextract output
 
   ex = exact_extract_output %>% mutate(subset = row_number()) %>%
@@ -116,15 +119,19 @@ transformation = function(exact_extract_output){
 }
 
 extraction_gomez = exact_extract(gom, sf, "mean")
-#extraction_disp = exact_extract(, sf, "mean")
+extraction_disp = exact_extract(disp, sf, "mean")
 
-gomez = transformation(extraction_gomez)
+gomez = tidying(extraction_gomez)
+gamma = tidying(extraction_disp) %>% mutate(observation = observation / 12) # per day
 
 # VISUALISATION to be outsourced! -----------------------------
 
+ggplot() +
+    geom_sf(aes(fill = ID), sf)
+
 colr <- colorRampPalette(brewer.pal(9, 'Blues'))
 # quick viz
-rasterVis::levelplot(stk,
+rasterVis::levelplot(disp,
           margin=FALSE,
           colorkey=list(
             space='bottom',
@@ -140,18 +147,32 @@ rasterVis::levelplot(stk,
           scales=list(draw=FALSE),
           col.regions=colr,
           at=seq(0, 20, len=101),
-          names.attr=rep('', nlayers(stk)))
+          names.attr=rep('', nlayers(disp)))
 
-gg = ggplot(gomez) +
+
+
+gg1 = ggplot(gomez) +
   geom_point(aes(start, observation, group = subset), color = "grey15")+
   facet_wrap(~ subset) +
   geom_smooth(aes(start, observation), method = "lm", color = "darkgreen", fill = "grey60") +
   theme_minimal() +
   labs(title = "Glacier movement by geographical subset",
        subtitle = "Data from Gómez et al. (2020)",
-       y = "Velocity [m / year]", x = "Date") +
+       y = "Velocity [m / day]", x = "Date") +
   theme(strip.text.x = element_text(size = 20),
         axis.text.x = element_text(angle = 65))
-print(gg)
+print(gg1)
 
-ggsave(file.path(plotdir, "Gomez_glacier_movement.png"), device = "png", scale = 0.5, height = 10, width = 15)
+gg2 = ggplot(gamma) +
+  geom_point(aes(start, observation, group = subset), color = "grey15")+
+  facet_wrap(~ subset) +
+  geom_smooth(aes(start, observation), method = "lm", color = "darkgreen", fill = "grey60") +
+  theme_minimal() +
+  labs(title = "Glacier movement by geographical subset",
+       subtitle = "Data processed by GAMMA offset tracking",
+       y = "Velocity [m / temp.baseline]", x = "Date") +
+  theme(strip.text.x = element_text(size = 20),
+        axis.text.x = element_text(angle = 65))
+print(gg2)
+
+ggsave(file.path(plotdir, "Gamma_glacier_movement.png"), plot = gg2, device = "png", scale = 0.5, height = 10, width = 15)
