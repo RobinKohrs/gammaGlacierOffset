@@ -14,6 +14,8 @@
 packages = c("tidyverse", "raster", "sf", "exactextractr", "stringr", "data.table", "RColorBrewer")
 lapply(packages, require, character.only = TRUE)
 
+source("./R/functions.R")
+
 # CREATE PATHS -----------------------------
 
 plotdir = "./plots/glacier_movement"
@@ -31,21 +33,31 @@ dir_gom = "./data/disp_gomez"
 files_gom = list.files(dir_gom, pattern = ".tif$", full.names = TRUE)
 
 # out displacement data with GAMMA software
-dir_disp = "./results"
+dir_disp = "./results/pwr_thresh0.01"
 files_disp = list.files(dir_disp, pattern = "\\.mag.geo_32627.tif$", full.names = TRUE)
 
+# Import DEM for slope analyses
+dir_dem = "./data/DEM/LMI_Haedarlikan_DEM_16bit_subset_32627.tif"
+dem_big = raster(dir_dem)
+crs(dem_big)
+
 # check for crs
+#all
 #if (!as.character(crs(raster(files_disp[1]))) == as.character(crs(sf))) stop()
 
 # RASTER PREPROCESSING -----------------------------
 
-# stacking
-
-#disp = stack(files_disp)
-
 # creating dummy to refer on:
 dummy = raster(crs = "+proj=utm +zone=27 +datum=WGS84 +units=m +no_defs",
                res = c(30, 30), ext = raster::extent(extent_only_glacier))
+
+dem = dem_big %>% resample(dummy)
+slope = raster::terrain(dem, opt = "slope", unit = "degrees")
+
+par(mfrow = (c(1, 2)))
+plot(slope)
+plot(dem)
+plot(sf, add = TRUE)
 
 # crop all disp to extent
 disps = map(files_disp, function(x){
@@ -53,19 +65,19 @@ disps = map(files_disp, function(x){
       resample(dummy)
 })
 
-goms = map(files_gom, function (x){
-    raster(x) %>%
-        resample(dummy)
-})
+#goms = map(files_gom, function (x){
+#    raster(x) %>%
+#        resample(dummy)
+#})
+#
+## stacking
+#gom = stack(goms)
 
-# stacking
-gom = stack(goms)
 disp = stack(disps)
 
 
-
 # NAMING -----------------------------
-# test stringr if they match...
+#' test stringr if they match...
 
 # assign dates to raster bands
 pairs = names(gom) %>%
@@ -92,7 +104,7 @@ colnames(pairs_df) = c("start", "end")
 
 # filter the same dates as the gomez displacements.
 
-# HERE
+#' HERE
 
 # EXTRACTION -----------------------------
 # for now, exatraction of all gomez displacements, no matter what
@@ -123,6 +135,13 @@ extraction_disp = exact_extract(disp, sf, "mean")
 
 gomez = tidying(extraction_gomez)
 gamma = tidying(extraction_disp) %>% mutate(observation = observation / 12) # per day
+
+# SLOPE ANALYSIS -----------------------------
+#' Baustelle
+
+sp.dt = as.data.table.raster(slope, xy=TRUE)
+
+
 
 # VISUALISATION to be outsourced! -----------------------------
 
@@ -160,7 +179,8 @@ gg1 = ggplot(gomez) +
        subtitle = "Data from Gómez et al. (2020)",
        y = "Velocity [m / day]", x = "Date") +
   theme(strip.text.x = element_text(size = 20),
-        axis.text.x = element_text(angle = 65))
+        axis.text.x = element_text(angle = 65)) +
+    ylim(c(-0.5, 2.5))
 print(gg1)
 
 gg2 = ggplot(gamma) +
@@ -170,9 +190,11 @@ gg2 = ggplot(gamma) +
   theme_minimal() +
   labs(title = "Glacier movement by geographical subset",
        subtitle = "Data processed by GAMMA offset tracking",
-       y = "Velocity [m / temp.baseline]", x = "Date") +
+       y = "Velocity [m / day]", x = "Date") +
   theme(strip.text.x = element_text(size = 20),
-        axis.text.x = element_text(angle = 65))
+        axis.text.x = element_text(angle = 65)) +
+    ylim(c(-0.5, 2.5))
 print(gg2)
 
+ggsave(file.path(plotdir, "Gomez_glacier_movement.png"), plot = gg1, device = "png", scale = 0.5, height = 10, width = 15)
 ggsave(file.path(plotdir, "Gamma_glacier_movement.png"), plot = gg2, device = "png", scale = 0.5, height = 10, width = 15)
