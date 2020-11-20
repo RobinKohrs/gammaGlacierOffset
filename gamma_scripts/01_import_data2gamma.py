@@ -88,10 +88,14 @@ def unzip(dir_data, out_dir):
             print("======")
             print(TGREEN + "Extracting: {}".format(f) + ENDC)
             print("======")
-            for file in zf.infolist():
-                extraced_size += file.file_size
-                print("{} %".format(extraced_size * 100/uncompressed_size))
-                zf.extract(file, out_dir)
+            if not args.print:
+                for file in zf.infolist():
+                    extraced_size += file.file_size
+                    print("{} %".format(extraced_size * 100/uncompressed_size))
+                    zf.extract(file, out_dir)
+            else:
+                print("...."
+                      "")
         else:
             print(f)
             print("already unzipped")
@@ -139,14 +143,14 @@ def import_scene(safe_folder):
         print("=====")
         print("Only importing subswath {}".format(sw[0]))
         print("=====")
-        print()
+        print(safe_folder)
 
         m = re.match(".*__1SDV_(\d{4})(\d{2})(\d{2})", safe_folder)
         d = m.groups()
         date_str = ''.join(d)
 
         slc = rec_reg(safe_folder, ".*{sw}.*-{pol}-{date}.*\.tiff$".format(sw=sw[0], pol=pol[0],date=date_str))[0]
-        ann = rec_reg(safe_folder, "^s1a.*{sw}.*-{pol}-{date}.*\.xml".format(sw=sw[0], pol=pol[0], date=date_str))[0]
+        ann = rec_reg(safe_folder, "^s1[ab].*{sw}.*-{pol}-{date}.*\.xml".format(sw=sw[0], pol=pol[0], date=date_str))[0]
         cal = rec_reg(safe_folder, "^cali.*{sw}.*-{pol}-{date}".format(sw=sw[0], pol=pol[0], date=date_str))[0]
         noi = rec_reg(safe_folder, "^noi.*{sw}.*-{pol}-{date}".format(sw=sw[0], pol=pol[0], date=date_str))[0]
 
