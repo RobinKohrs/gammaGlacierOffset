@@ -129,7 +129,7 @@ def offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, oversampling):
         return None
 
 
-def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_par):
+def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_par, ccs):
     # Parameter setting
     
     print("\n")
@@ -186,7 +186,7 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_
 
         cmd = f"offset_pwr_tracking {slc1} {slc2} {slc1_par} {slc2_par} {off} {offset} {ccp} {rwin} {azwin} {offset_QA} " \
               f"{oversampling} {threshold} {rstep} {azstep} {r_start} {r_end} {az_start} {az_end} - - " \
-              f"{deramping} {int_filter} 0 0 -"
+              f"{deramping} {int_filter} 0 0 {ccs}"
 
         if not args.print:
             pg.offset_pwr_tracking(slc1, slc2, slc1_par, slc2_par, off,  # INPUT
@@ -198,7 +198,7 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_
                                    "-", "-",  # lanczos interp, bandwidth
                                    deramping, int_filter,
                                    0, 0,  # printing
-                                   "-")  # cross-correlation for each patch
+                                   ccs)  # cross-correlation for each patch
             print("=======")
 
         else:
@@ -254,7 +254,7 @@ def tracking(slc1, slc2, slc1_par, slc2_par, off, offset, ccp, offset_QA, rmli1_
             print(cmd)
 
 
-def displacements(offset, ccp, slc1_par, off, disp,
+def displacements(offset, ccp, ccs, slc1_par, off, disp,
                   disp_real, disp_imag, disp_mag,
                   rmli1_par):
     print("=====")
@@ -317,6 +317,7 @@ def main():
         qmf = main_path + ".qmf"
         offset = main_path + ".offset"
         ccp = main_path + ".ccp"  # cross-correlation for each patch
+        ccs = main_path + ".ccs" # standard deviation of cross-correlation for each path
         disp = main_path + ".disp"
         disp_real = main_path + ".disp.real"
         disp_imag = main_path + ".disp.imag"
@@ -344,14 +345,15 @@ def main():
                 offset_pwr(rslc1, rslc2, rslc1_par, rslc2_par, off, reg, qmf, QA)
             elif int(step) == 3:
                 # Offset Tracking algorithm
-                tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, offset_QA, rmli1_par)
+                tracking(rslc1, rslc2, rslc1_par, rslc2_par, off, offset, ccp, offset_QA, rmli1_par, ccs)
             elif int(step) == 4:
                 # Calculating actual displacements
-                displacements(offset, ccp, rslc1_par, off, disp,
+                displacements(offset, ccp, ccs, rslc1_par, off, disp,
                               disp_real, disp_imag, disp_mag,
                               rmli1_par)
             else:
                 pass
+        break
 
 if __name__ == '__main__':
     main()
