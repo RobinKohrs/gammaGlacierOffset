@@ -49,7 +49,11 @@ def geocode():
 
         # build the cmd
         cmd = f"geocode {lt} {eqa_dem} {dem_width} {hgt_out} {mli_width} {mli_height} 2 0"
-        os.system(cmd) if not args.print else print(cmd)
+        # check if the products not already exist
+        if not os.path.isfile(hgt_out):
+            os.system(cmd) if not args.print else print(cmd)
+        else:
+            print(f"{hgt_out} already exists")
 
 def reference_tabs():
 

@@ -94,8 +94,7 @@ def unzip(dir_data, out_dir):
                     print("{} %".format(extraced_size * 100/uncompressed_size))
                     zf.extract(file, out_dir)
             else:
-                print("...."
-                      "")
+                print("....")
         else:
             print(f)
             print("already unzipped")
@@ -176,55 +175,11 @@ def import_scene(safe_folder):
         cmd = "par_S1_SLC {slc} {ann} {cal} {noi} {slc_par} {slc_file} {slc_tops_par} - - -".format(slc=slc, ann=ann, cal=cal,
                                                                                            noi=noi, slc_par=slc_par_name,
                                                                                            slc_file=slc_name, slc_tops_par=slc_tops_par)
-        
-        os.system(cmd) if not args.print else print(TRED + "working locally. Not calling pygamma" + ENDC)
-
-    elif len(sw) == 2:
-        print()
-        print("#"*(c_t//3) + "   IMPORT SLC  " + "#"*(c_t//3))
-        print()
-        print("=====")
-        print("Only importing subswaths {}, {}".format(sw[0], sw[1]))
-        print("=====")
-        print()
-
-        m = re.match(".*__1SDV_(\d{4})(\d{2})(\d{2})", safe_folder)
-        d = m.groups()
-        date_str = ''.join(d)
-
-        slc = rec_reg(safe_folder, ".*{sw}.*-{pol}-{date}.*\.tiff$".format(sw=sw[0], pol=pol[0], date=date_str))[0]
-        ann = rec_reg(safe_folder, "^s1a.*{sw}.*-{pol}-{date}.*\.xml".format(sw=sw[i], pol=pol[i], date=date_str))[0]
-        cal = rec_reg(safe_folder, "^cali.*{sw}.*-{pol}-{date}".format(sw=sw[i], pol=pol[i], date=date_str))[0]
-        noi = rec_reg(safe_folder, "^noi.*{sw}.*-{pol}-{date}".format(sw=sw[i], pol=pol[i], date=date_str))[0]
-
-        print(start_bold + start_underline + "Processing SAFE:\n" + end_bold + end_underline,
-              TYEL + safe_folder + ENDC)
-        print()
-        print(start_bold + start_underline + "Found the following ancillary files" + end_bold + end_underline)
-        print("SLC:\n" + ENDC, slc)
-        print("Annotation:\n" + ENDC, ann)
-        print("Calibaration:\n" + ENDC, cal)
-        print("Noise:\n" + ENDC, noi)
-        print()
-
-        # create the .slc and the .slc.par
-        slc_name = os.path.join(dir_slc, date_str + "_" + pol[0] + "_" + sw[0] + ".slc")
-        slc_par_name = slc_name + ".par"
-        slc_tops_name = slc_name + ".tops"
-
-        print(TGREEN + start_underline + "Creating:" + ENDC + end_underline)
-        print(TGREEN + "{} \n{}\n{}".format(slc_name, slc_par_name, slc_tops_name) + ENDC)
-
-        # execute the pygamma command
-        cmd = "par_S1_SLC {slc} {ann} {cal} {noi} {slc_par} {slc_file} {slc_tops_par} - - -".format(slc=slc, ann=ann,
-                                                                                                    cal=cal,
-                                                                                                    noi=noi,
-                                                                                                    slc_par=slc_par_name,
-                                                                                                    slc_file=slc_name,
-                                                                                                    slc_tops_par=slc_tops_name)
-
-        os.system(cmd) if not args.print else print(TRED + "working locally. Not calling pygamma" + ENDC)
-
+        # check if the file is not already extracted
+        if not os.path.isfile(slc_name):
+            os.system(cmd) if not args.print else print(TRED + "working locally. Not calling pygamma" + ENDC)
+        else:
+            print("SLCs are already extracted")
 
 def slc_import(dir_data, test=True, num_scenes=2):
     safes = [os.path.join(dir_data, x) for x in os.listdir(dir_data) if x.endswith(".SAFE")]
@@ -262,22 +217,31 @@ def dem_import(dir_dem, dem_name, test=True):
     print(TGREEN + out_par + ENDC)
 
     if not args.print:
-        pg.dem_import(dem, out, out_par)
+        # check if the output already exists
+        if not os.path.isfile(out) or not os.path.isfile(out_par):
+            pg.dem_import(dem, out, out_par)
+        else:
+            print("DEM is already extracted")
     else:
         print(start_bold + start_underline + TRED + "ONLY TESTING THE DEM IMPORT" + ENDC)
 
 def main():
-    if args.steps:
+
+    # only giving the option between doing one at a time or all
+    # If ONE --> choese one
+    if len(args.steps) == 1:
         if 0 in args.steps:
             unzip(dir_data, dir_data)
         elif 1 in args.steps:
             slc_import(dir_data) if args.print else slc_import(dir_data, test=False)
         elif 2 in args.steps:
             dem_import(dir_dem, dem_name) if not args.print else dem_import(dir_dem, dem_name, test=False)
-        else:
-            unzip(dir_data, dir_data)
-            slc_import(dir_data) if args.print else slc_import(dir_data, test=False)
-            dem_import(dir_dem, dem_name) if not args.print else dem_import(dir_dem, dem_name, test=False)
+
+    # if the len of the argumets provided to -s is > 1 (independent of what it is) it will make all three steps
+    else:
+        unzip(dir_data, dir_data)
+        slc_import(dir_data) if args.print else slc_import(dir_data, test=False)
+        dem_import(dir_dem, dem_name) if not args.print else dem_import(dir_dem, dem_name, test=False)
 
 if __name__ == "__main__":
     main()

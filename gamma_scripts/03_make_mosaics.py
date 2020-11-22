@@ -37,7 +37,12 @@ def make_mosaics(dates, range, azimuth):
                                                                                              slc_mosaic = slc_mosaic,
                                                                                              slc_mosaic_par = slc_mosaic_par,
                                                                                              rl=range, al=azimuth)
-        os.system(cmd) if not args.print else print(cmd)
+
+        # chekc if mosaic not already exists
+        if not os.path.isfile(slc_mosaic):
+            os.system(cmd) if not args.print else print(cmd)
+        else:
+            print("The mosaics already exists")
 
 if __name__ == "__main__":
     slc_dir = "../data/SLC"

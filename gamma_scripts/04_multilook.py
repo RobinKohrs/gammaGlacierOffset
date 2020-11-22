@@ -41,7 +41,11 @@ def multilook(slc_dir, image):
                                                                             rl = args.range,
                                                                             al = args.azimuth)
 
-        print(cmd) if args.print else os.system(cmd)
+        # check if mlu already exists
+        if not os.path.isfile(mli_name):
+            print(cmd) if args.print else os.system(cmd)
+        else:
+            print(f"{mli_name} already exists")
 
 def main():
     if args.image == "main" or args.image == "m":
