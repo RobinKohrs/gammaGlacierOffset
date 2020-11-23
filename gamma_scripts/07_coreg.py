@@ -20,7 +20,7 @@ args =parser.parse_args()
 def coreg(slc_dir, dem_dir, tuples_dir):
 
     # get all the date combos
-    date_combinations = [x for x in file_dict(slc_dir)]
+    date_combinations = [x for x in os.listdir(tuples_dir)]
 
     # for each combination
     for date in date_combinations:

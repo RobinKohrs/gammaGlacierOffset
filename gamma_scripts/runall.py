@@ -23,6 +23,7 @@ def get_ordered_files():
     # remove non matching ones
     r = re.compile(r"^\d\d.*")
     new_files = list(filter(r.match, py_sorted))
+    new_files = [x for x in new_files if not "slc" in x]
     return new_files
 
 def runem(files_list):
@@ -58,6 +59,7 @@ def runem(files_list):
             print(cmd)
 
         elif i == 7:
+            exit()
             cmd = f"python {f}"
             print(cmd)
 

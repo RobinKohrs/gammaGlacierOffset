@@ -43,9 +43,13 @@ def geocode():
         reg = identifier + ".mosaic.mli.par"
 
         # returns a list with
-        mli_file = rec_reg(slc_dir, reg)[0]
-        mli_width = int(awkpy(mli_file, "range_samples", 2))
-        mli_height = int(awkpy(mli_file, "azimuth_lines", 2))
+        try:
+            mli_file = rec_reg(slc_dir, reg)[0]
+            mli_width = int(awkpy(mli_file, "range_samples", 2))
+            mli_height = int(awkpy(mli_file, "azimuth_lines", 2))
+        # try to find error
+        except:
+            continue;
 
         # build the cmd
         cmd = f"geocode {lt} {eqa_dem} {dem_width} {hgt_out} {mli_width} {mli_height} 2 0"

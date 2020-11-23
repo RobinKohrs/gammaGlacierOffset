@@ -8,6 +8,7 @@
 import argparse
 import sys
 from io import StringIO
+import py_gamma as pg
 
 from functions import *
 
@@ -299,8 +300,10 @@ def main():
 
     # specify ending of file to be used as basename giver
     dict = file_dict(slc_dir=slc_dir, ending=".mosaic_slc")
+    datepairs = os.listdir(tuples_dir)
 
-    for datepair in dict:
+
+    for datepair in datepairs:
 
         # datepair = "20200911_20200923"
         date1 = datepair[0:8]
