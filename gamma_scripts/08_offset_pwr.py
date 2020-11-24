@@ -302,7 +302,6 @@ def main():
     dict = file_dict(slc_dir=slc_dir, ending=".mosaic_slc")
     datepairs = os.listdir(tuples_dir)
 
-
     for datepair in datepairs:
 
         # datepair = "20200911_20200923"
@@ -327,6 +326,7 @@ def main():
         disp_mag = main_path + ".disp.mag"
         offset_QA = main_path + ".offset_QA"
 
+
         # fetching SLCs
         # fetching main
         rslcs = [rslc for rslc in os.listdir(tuple) if rslc.endswith(".rslc")]
@@ -335,6 +335,7 @@ def main():
         rslc2 = [os.path.join(tuple, x) for x in rslcs if date2 in x][0]
         rslc1_par = [os.path.join(tuple, x) for x in rslcs_par if date1 in x][0]
         rslc2_par = [os.path.join(tuple, x) for x in rslcs_par if date2 in x][0]
+
 
         rmli1_par = [os.path.join(tuple, rmli) for rmli in os.listdir(tuple) if rmli.endswith(".rmli.par")][0]
 
@@ -356,7 +357,7 @@ def main():
                               rmli1_par)
             else:
                 pass
-        break
+        # break
 
 if __name__ == '__main__':
     main()
