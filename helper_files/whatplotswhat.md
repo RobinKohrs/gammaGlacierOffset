@@ -12,6 +12,10 @@
 and the ground range geometry
 - It is geocoded and can be plotted with the width that is found in the cropped dem, produced by gc_map (e.g eqa.dem.par)
 
+# PLot the geocoded file (.geo)
+
+- The geocoded file will probably have as many colums (width) as the cropped DEM (e.g eqa.dem.par)
+
 
 ```commandline
 dismph ...lt

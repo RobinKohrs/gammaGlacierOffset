@@ -126,8 +126,11 @@ def geocode_back(list_of_files, dem_dir):
         
         # build cmd
         cmd = f"geocode_back {f} {range_samples} {lt} {data_out} {eqa_dem_width} "  # {height_mli}
-        
-        out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+
+        if not os.path.isfile(data_out):
+            out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+        else:
+            print("geocoded file already exists: ", data_out)
 
 
 def make_geotiffs(geofiles, dem_dir):
@@ -153,10 +156,15 @@ def make_geotiffs(geofiles, dem_dir):
             output_file = f + ".tif"
             
             cmd = f"data2geotiff {dem_par} {f} 2 {output_file}"
-            
-            out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
-            if out:
-                print(out.stdout.decode("UTF-8"))
+
+            # check if file already exists
+            if not os.path.isfile(output_file):
+                out = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True) if not args.print else print(cmd)
+                if out:
+                    print(out.stdout.decode("UTF-8"))
+            else:
+                print("geotiff already exists")
+
         except:
             print("SOME ERROR I DONT KNOW")
 
@@ -215,22 +223,22 @@ def main():
                         f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2])]
     
     # geocode_back
-    # geocode_back(files_to_geocode, dem_dir=dem_dir)
+    geocode_back(files_to_geocode, dem_dir=dem_dir)
     
     # geocode all .geofiles
     # find all geo files
     file_endings = [".geo"]
     geofiles_to_geocode = [f for f in all_files if f.endswith(file_endings[0])]
     
-    # make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
-    
+    make_geotiffs(geofiles_to_geocode, dem_dir=dem_dir)
     # find all geotiffs
     geotiffs_to_copy = [f for f in all_files if f.endswith(".tif")]
- 
+    [print(i) for i in geotiffs_to_copy]; exit()
     transform(geotiffs_to_copy, results, tuple_dir)
     
 
 # --------------------------------------------------------------------------------
 if __name__ == "__main__":
+    print("hey")
     main()
 # --------------------------------------------------------------------------------
