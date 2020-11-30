@@ -170,6 +170,7 @@ def make_geotiffs(geofiles, dem_dir):
 
 
 def transform(geotiffs, results, tuple_dir):
+
     
     # handle deleter with care
     deleter = f"find {tuple_dir} -name *32627* | xargs rm"
@@ -234,11 +235,12 @@ def main():
     # find all geotiffs
     geotiffs_to_copy = [f for f in all_files if f.endswith(".tif")]
     [print(i) for i in geotiffs_to_copy]; exit()
+
     transform(geotiffs_to_copy, results, tuple_dir)
     
 
 # --------------------------------------------------------------------------------
 if __name__ == "__main__":
-    print("hey")
+
     main()
 # --------------------------------------------------------------------------------
