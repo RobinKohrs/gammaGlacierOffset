@@ -219,13 +219,18 @@ def main():
     all_files = get_all_files(tuple_dir)
     
     # filter the files you want
-    file_endings = [".imag", ".real", ".mag"]
+    file_endings = [".mag", ".real", ".imag", ".ccs"]
+    # files_to_geocode = [f for f in all_files if
+    #                     f.endswith(file_endings[0])]
+    
     files_to_geocode = [f for f in all_files if
-                        f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2])]
+                        f.endswith(file_endings[0]) or f.endswith(file_endings[1]) or f.endswith(file_endings[2]) or
+                        f.endswith(file_endings[3])]
+    print(files_to_geocode)
     
     # geocode_back
     geocode_back(files_to_geocode, dem_dir=dem_dir)
-    
+
     # geocode all .geofiles
     # find all geo files
     file_endings = [".geo"]
