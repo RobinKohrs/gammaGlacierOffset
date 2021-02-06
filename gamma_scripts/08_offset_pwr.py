@@ -8,7 +8,6 @@
 import argparse
 import sys
 from io import StringIO
-import py_gamma as pg
 
 from functions import *
 
@@ -92,13 +91,14 @@ def initiate_offsets(slc1_par, slc2_par, off):
     sys.stdin = sysinput  # bring std input back
 
 
-def offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf, oversampling):
+def offset_pwr(slc1, slc2, slc1_par, slc2_par, off, reg, qmf):
     # optimised by looping! -> in paper!
     patch_rn = 512
     patch_az = patch_rn / 5  # patches to be rectangular
     samples_rn = 16
     samples_az = 50  # many, because of the large water content in the upper area of the scenes
-
+    oversampling = 1
+    
     threshold = args.thresh[0]
 
     print("=====")

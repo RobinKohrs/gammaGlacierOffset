@@ -11,7 +11,7 @@ import subprocess
 
 from functions import *
 
-parser = argparse.ArgumentParser(description="Glacier Offset Tracking in 5 steps")
+parser = argparse.ArgumentParser(description="Export Offsets")
 # get positional arguments
 parser.add_argument("-p", "--print", metavar="", dest="print", help="only print cmd call", action="store_const",
                     const=True)

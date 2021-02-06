@@ -4,9 +4,10 @@
 Script for creating mosaics of subswatch 2
     - <date>.slc <date>.slc.par <date>.slc.par.tops
 """
-import os
-from functions import get_dates
 import argparse
+import os
+
+from functions import get_dates
 
 # parse some arguments
 parser = argparse.ArgumentParser(description="Multilooking parameter")
@@ -19,7 +20,7 @@ parser.add_argument("-a", "--azimuth", dest="azimuth",
 
 parser.add_argument("-p", "--print", dest="print", help="only print cmd call", action="store_const", const=True)
 
-args =parser.parse_args()
+args = parser.parse_args()
 
 def make_mosaics(dates, range, azimuth):
     """

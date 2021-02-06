@@ -1,8 +1,11 @@
-from functions import *
+import os
 
-slc_dir = "../data/test_offset/perf"
-# slc_dir = "../data/SLC"
+demdir = "../data/DEM"
 
-lst = file_dict(slc_dir=slc_dir, ending=".mosaic_slc")
+lt1 = os.path.join(demdir, "20160112_vv_iw2.lt")
 
-print(lst)
+def main():
+    os.remove(lt1)
+
+if __name__ == "__main__":
+    main()
