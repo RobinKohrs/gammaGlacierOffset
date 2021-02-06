@@ -6,6 +6,7 @@ __pycache__
 Trash
 *.swp
 paper*
-.Rproj*
+.*Rproj$
 tiffs*
 seminar*
+
