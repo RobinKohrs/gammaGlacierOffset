@@ -1,4 +1,0 @@
-
-ERROR: cannot open SLC-1 parameter file: ../data/tuples/20170915.rslc.par
-*** Create and update ISP offset and interferogram parameter files ***
-*** Copyright 2015 Gamma Remote Sensing v5.3 clw/uw 10-Nov-2015 ***
