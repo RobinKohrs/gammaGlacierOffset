@@ -1,0 +1,25 @@
+{
+    "id": "071D20D6",
+    "path": "~/projects/uni/gammaGlacierOffset/R/climatediagram.R",
+    "project_path": "R/climatediagram.R",
+    "type": "r_source",
+    "hash": "3852319670",
+    "contents": "",
+    "dirty": false,
+    "created": 1607109444990.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "tempName": "Untitled1",
+        "cursorPosition": "46,1",
+        "scrollLine": "10"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1607115882,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1607115882595,
+    "read_only": false,
+    "read_only_alternatives": []
+}
