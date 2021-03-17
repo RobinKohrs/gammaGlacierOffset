@@ -28,19 +28,6 @@ parser.add_argument("-sw", "--swaths", dest="swaths", help="Which swaths to use?
 parser.add_argument("-pol", "--polarizations", dest="pols", help="Which polarizations to use?", nargs="+", default=["vv"], type=str)
 
 
-# get the arguments
-args = parser.parse_args()
-if args.print:
-    print("working locally...")
-else:
-    try:
-        import py_gamma as pg
-        print("working on the server...")
-    except ImportError as err:
-        print("Trying to import gamma")
-        print("However the py_gamma-module can not be loaded...")
-        print("Make sure its on $PATH? or PYTHONPATH?")
-        exit(-1)
 
 
 # get dimensions of terminal
@@ -226,6 +213,20 @@ def dem_import(dir_dem, dem_name, test=True):
         print(start_bold + start_underline + TRED + "ONLY TESTING THE DEM IMPORT" + ENDC)
 
 def main():
+
+    # get the arguments
+    args = parser.parse_args()
+    if args.print:
+        print("working locally...")
+    else:
+        try:
+            import py_gamma as pg
+            print("working on the server...")
+        except ImportError as err:
+            print("Trying to import gamma")
+            print("However the py_gamma-module can not be loaded...")
+            print("Make sure its on $PATH? or PYTHONPATH?")
+            exit(-1)
 
     # only giving the option between doing one at a time or all
     # If ONE --> choese one
