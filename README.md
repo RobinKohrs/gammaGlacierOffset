@@ -6,6 +6,7 @@ order they are numerated
 - Some caution needs to be paid in the setup of the relative paths as most of them are still hardcoded (but all relative to the
 main script-directory)
 
+
 ```
 .
 |–– gammascripts/
@@ -30,8 +31,21 @@ main script-directory)
 |  |  |  |–– phase
 
 ``` 
+***
+
+# How to proceed? 
+
+In order to follow the proposed approach, this flowchart might be a good starting-point: 
+
+![flowchart](./plots/flowchart/gamma.png)
+
+
 
 ![interferogram](./plots/26102020/galcierInterferogram.png)
+
+(Interferogram over the Solheimajökull glacier)
+
+***
 
 Authors: Robin Kohrs, Konstantin Schellenberg
 
