@@ -7,13 +7,14 @@
 import shutil
 import os
 import sys
-import glob
-import getpass
 import subprocess
+from functions import *
 
 # get the userinput
-usr=input("Your USGS Username: ")
-passwd=getpass.getpass("Your USGS Password: ")
+# usr=input("Your USGS Username: ")
+# passwd=getpass.getpass("Your USGS Password: ")
+print("\n")
+print(TGREEN + "Starting the to setup the timseries-project" + ENDC)
 
 # grab the download timeseries file
 download_dir = [x for x in os.listdir("../") if "download" in x][0]
@@ -32,8 +33,5 @@ else:
 shutil.copy(src = file, dst=datadir)
 file_dst = os.path.join(datadir, "2020_download.py")
 
-# run the download file
-r = subprocess.run("{}".format(file_dst), shell=True, stdout=subprocess.PIPE,
-                    input="{usr} {passwd}".format(usr=usr, passwd=passwd))
-
+print("Now you have to move to the ../data directory and run the python file that will download the data from ASF\n")
 

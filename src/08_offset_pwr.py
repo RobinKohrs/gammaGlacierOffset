@@ -8,7 +8,6 @@
 import argparse
 import sys
 from io import StringIO
-
 from functions import *
 
 ##################
@@ -60,7 +59,7 @@ method = "intensity"
 
 
 #########################################
-# CREATING OFFSETS (actually belongs to another script
+# CREATING OFFSETS (actually belongs to another script)
 #########################################
 
 def initiate_offsets(slc1_par, slc2_par, off):
