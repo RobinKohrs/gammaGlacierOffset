@@ -6,7 +6,6 @@ order they are numerated
 - Some caution needs to be paid in the setup of the relative paths as most of them are still hardcoded (but all relative to the
 main script-directory)
 
-
 ```
 .
 |–– gammascripts/
